@@ -37,7 +37,7 @@ def data_gen(space, n_samples, sampler):
             return torch.tensor(scale(sampler.random(n=n_samples), l_bounds=space[0][0], u_bounds=space[0][1])).float()
         elif sampler == "Sobol":
             sampler = Sobol(d=len(space))
-            return torch.Tensor(scale(sampler.random_base2(m=8), l_bounds=space[0][0], u_bounds=space[0][1])).float()  #TODO: look into pape
+            return torch.Tensor(scale(sampler.random(n=n_samples), l_bounds=space[0][0], u_bounds=space[0][1])).float()  #TODO: look into pape
         elif sampler== 'random':
             one_dim_points = np.random.default_rng().uniform(size=(n_samples, len(space)))
             return torch.Tensor((space[0][1] - space[0][0])*one_dim_points + space[0][0]).float()
@@ -52,7 +52,7 @@ def data_gen(space, n_samples, sampler):
             return torch.tensor(scale(sampler.random(n=n_samples), l_bounds=space[0], u_bounds=space[1])).float()
         elif sampler == "Sobol":
             sampler = Sobol(d=len(space))
-            return torch.Tensor(scale(sampler.random_base2(m=8), l_bounds=space[0], u_bounds=space[1])).float()  #TODO: look into paper
+            return torch.Tensor(scale(sampler.random(n=n_samples), l_bounds=space[0], u_bounds=space[1])).float()  #TODO: look into paper
         elif sampler== 'random':
             one_dim_points = np.random.default_rng().uniform(size=(n_samples, len(space)))
             return torch.Tensor((space[1] - space[0])*one_dim_points + space[0]).float()

@@ -260,15 +260,18 @@ class BurgersNet:
         self.optimizer = torch.optim.Adam(self.model.parameters())
         self.state_dict = self.model.state_dict()
     
-    def training(self, X_int_train,X_bic_train,y_bic_train, epochs):
+    def training(self, X_int_train, X_bc_train, X_ic_train, y_bc_train,y_ic_train, epochs):
         res = pd.DataFrame(None, columns=['Training Loss'], dtype=float)
         for e in range(epochs):
             self.model.train()
 
             self.optimizer.zero_grad()
 
-            y_bic_pred = self.model(X_bic_train)
-            loss_bic = self.mseloss(y_bic_pred, y_bic_train)
+            y_bc_pred = self.model(X_bc_train)
+            loss_bc = self.mseloss(y_bc_pred, y_bc_train)
+
+            y_ic_pred = self.model(X_ic_train)
+            loss_ic = self.mseloss(y_ic_pred, y_ic_train)
 
             u = self.model(X_int_train)
             du_dX = torch.autograd.grad(inputs=X_int_train, outputs=u, grad_outputs=torch.ones_like(u),retain_graph = True, create_graph=True)[0]
@@ -278,7 +281,7 @@ class BurgersNet:
             #print(X_int_train.shape, u.squeeze().shape, du_dx.shape, du_dxx.shape)
             loss_pde = self.mseloss(du_dt + du_dx*u.squeeze(),-0.01/np.pi*du_dxx)
             
-            loss = loss_pde + loss_bic
+            loss = loss_pde + loss_bc + loss_ic
             res.loc[e, 'Training Loss'] = loss.item()
             loss.backward(retain_graph=True)
             self.optimizer.step()
