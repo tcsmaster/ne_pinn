@@ -118,21 +118,21 @@ def main(pde,
 
 if __name__ == '__main__':
     pde='Navier-Stokes'
-    gamma_1 = 0.5
-    gamma_2 = 0.5
+    gamma_1_list = [0.5, 0.7, 1.0]
+    gamma_2_list = [0.5, 0.7, 1.0]
     #gamma_3_list = [0.5, 0.7, 1.0]
     hidden_units_1=100
     hidden_units_2=100
     #hidden_units_3=100
     epochs=10000
-    sampler_list = ['random','LHS', 'Halton', 'Sobol']
+    #sampler_list = ['random','LHS', 'Halton', 'Sobol']
     directory=os.getcwd()
-    for sampler in sampler_list:
-        main(pde=pde,gamma_1=gamma_1,
+    for gamma_1 in gamma_1_list:
+        for gamma_2 in gamma_2_list:
+            main(pde=pde,gamma_1=gamma_1,
                      gamma_2=gamma_2,
                      hidden_units_1=hidden_units_1,
                      hidden_units_2=hidden_units_2,
                      epochs=epochs,
                      directory=directory,
-                     sampler=sampler
                 )
