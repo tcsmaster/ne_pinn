@@ -94,8 +94,8 @@ def main(pde,
                                        hidden_units_1=hidden_units_1,
                                        hidden_units_2=hidden_units_2,
                                        gamma_1=gamma_1,gamma_2=gamma_2)
-        place = f'results\\Burgers\\2layer\\normalized\\'
-
+        place = f'results\\Navier\\2layer\\normalized\\'
+        results_directory = os.path.join(directory, place)
     else:
         file_name =generate_file_name(pde=pde,epochs=epochs,
                                       hidden_units_1=hidden_units_1,
@@ -105,7 +105,7 @@ def main(pde,
                                    hidden_units_3=hidden_units_3,
                                    gamma_3=gamma_3
         )
-        place = f'results\\Burgers\\3layer\\normalized\\'
+        place = f'results\\Navier\\3layer\\normalized\\'
         results_directory = os.path.join(directory, place)
     save_results(results=results,
                  directory=results_directory,
@@ -125,7 +125,6 @@ if __name__ == '__main__':
     hidden_units_2=100
     #hidden_units_3=100
     epochs=10000
-    #sampler_list = ['random','LHS', 'Halton', 'Sobol']
     directory=os.getcwd()
     for gamma_1 in gamma_1_list:
         for gamma_2 in gamma_2_list:

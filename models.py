@@ -3,6 +3,8 @@ import torch.nn as nn
 import numpy as np
 import pandas as pd
 from helpers import *
+import warnings
+warnings.filterwarnings("error")
 
 class MLP2(nn.Module):
     """Multi-layer perceptron with two hidden layers
@@ -230,16 +232,16 @@ class NSNet:
             p_y = torch.autograd.grad(inputs=X_int_train, outputs=p, grad_outputs=torch.ones_like(p), retain_graph=True, create_graph=True)[0][:, 2]
             p_z = torch.autograd.grad(inputs=X_int_train, outputs=p, grad_outputs=torch.ones_like(p), retain_graph=True, create_graph=True)[0][:, 3]
             
-            momentum_x = self.mseloss(u_vel_t + u_vel * u_vel_x + v_vel * u_vel_y + w_vel * u_vel_z,\
+            momentum_x = self.mseloss(u_vel_t + u_vel.squeeze() * u_vel_x + v_vel.squeeze() * u_vel_y + w_vel.squeeze() * u_vel_z,\
                                       p_x - u_vel_xx - u_vel_yy - u_vel_zz)
-            momentum_y = self.mseloss(v_vel_t + u_vel * v_vel_x + v_vel * v_vel_y + w_vel * v_vel_z,\
+            momentum_y = self.mseloss(v_vel_t + u_vel.squeeze() * v_vel_x + v_vel.squeeze() * v_vel_y + w_vel.squeeze() * v_vel_z,\
                                       p_y - v_vel_xx - v_vel_yy - v_vel_zz)
-            momentum_z = self.mseloss(w_vel_t + u_vel * w_vel_x + v_vel * w_vel_y + w_vel * w_vel_z,\
+            momentum_z = self.mseloss(w_vel_t + u_vel.squeeze() * w_vel_x + v_vel.squeeze() * w_vel_y + w_vel.squeeze() * w_vel_z,\
                                       p_z - w_vel_xx - w_vel_yy - w_vel_zz)
-            continuity = u_vel_x + v_vel_y + w_vel_z
+            continuity = self.mseloss(u_vel_x + v_vel_y + w_vel_z, torch.zeros_like(u_vel_x))
             
             loss = momentum_x + momentum_y + momentum_z + continuity + loss_bic
-            res.loc[e, 'Training Loss'] = torch.sum(loss.item())
+            res.loc[e, 'Training Loss'] = loss.item()
             loss.backward(retain_graph=True)
             self.optimizer.step()
             '''
