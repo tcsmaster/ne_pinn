@@ -1,9 +1,9 @@
 from Burgers_process import *
 from plots import *
-pde = 'Burgers'
+pde = 'Poisson'
 acc = "Training Loss"
-gamma_1_list = [0.5, 0.7, 1.0]
-gamma_2_list = [0.5, 0.7, 1.0]
+gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 #gamma_3_list = [0.5, 0.7, 1.0]
 hidden_units_1 = 100
 hidden_units_2 = 100

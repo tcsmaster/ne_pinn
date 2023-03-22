@@ -194,18 +194,16 @@ class NSNet:
         self.optimizer = torch.optim.Adam(self.model.parameters())
         self.state_dict = model.state_dict
     
-    def training(self, X_int_train,X_bc_train,X_ic_train, X_int_test, y_bc_train, y_ic_train, y_int_test, epochs):
+    def training(self, X_int_train,X_bic_train, X_int_test, y_bic_train, y_int_test, epochs):
         res = pd.DataFrame(None, columns=['Training Loss', 'Test Loss'], dtype=float)
         for e in range(epochs):
             self.model.train()
 
             self.optimizer.zero_grad()
             # order: t, x, y, z
-            y_bc_pred = self.model(X_bc_train)
-            loss_bc = self.mseloss(y_bc_pred, y_bc_train)
+            y_bic_pred = self.model(X_bic_train)
+            loss_bic = self.mseloss(y_bic_pred, y_bic_train)
 
-            y_ic_pred = self.model(X_ic_train)
-            loss_ic = self.mseloss(y_ic_pred, y_ic_train)
             
             u = self.model(X_int_train)
             u_vel,v_vel,w_vel,p=u[:, 0:1],u[:, 1:2],u[:, 2:3],u[:, 3:4]
@@ -230,7 +228,7 @@ class NSNet:
             p_x = torch.autograd.grad(inputs=X_int_train, outputs=p, grad_outputs=torch.ones_like(p), retain_graph=True, create_graph=True)[0][:, 1]
             p_y = torch.autograd.grad(inputs=X_int_train, outputs=p, grad_outputs=torch.ones_like(p), retain_graph=True, create_graph=True)[0][:, 2]
             p_z = torch.autograd.grad(inputs=X_int_train, outputs=p, grad_outputs=torch.ones_like(p), retain_graph=True, create_graph=True)[0][:, 3]
-            #print(x.shape, u.squeeze().shape, du_dx.shape, du_dxx.shape)
+            
             momentum_x = self.mseloss(u_vel_t + u_vel * u_vel_x + v_vel * u_vel_y + w_vel * u_vel_z,\
                                       p_x - u_vel_xx - u_vel_yy - u_vel_zz)
             momentum_y = self.mseloss(v_vel_t + u_vel * v_vel_x + v_vel * v_vel_y + w_vel * v_vel_z,\
@@ -239,16 +237,17 @@ class NSNet:
                                       p_z - w_vel_xx - w_vel_yy - w_vel_zz)
             continuity = u_vel_x + v_vel_y + w_vel_z
             
-            loss = momentum_x + momentum_y + momentum_z + continuity + loss_bc + loss_ic
+            loss = momentum_x + momentum_y + momentum_z + continuity + loss_bic
             res.loc[e, 'Training Loss'] = loss.item()
             loss.backward(retain_graph=True)
             self.optimizer.step()
-     
+            '''
             self.model.eval() 
             with torch.no_grad():
                 y_test_pred = self.model(X_int_test)
                 test_loss = self.mseloss(y_test_pred, y_int_test)
                 res.loc[e, 'Test Loss'] = test_loss.item()
+            '''
         return res
     
 

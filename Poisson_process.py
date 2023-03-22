@@ -11,7 +11,7 @@ def main(pde,
          directory,
          gamma_3 = None,
          hidden_units_3 = None,
-         sampler='grid'
+         sampler=None
     ):
     """
     Trains a neural network model on a dataset and saves the resulting 
@@ -50,9 +50,10 @@ def main(pde,
     print(f"Model: {net.model}")
 
     full_space = [(-1., 1.)]
-    X_int_train = data_gen(space=full_space, n_samples=128, sampler=sampler)
+    #X_int_train = data_gen(space=full_space, n_samples=128, sampler=sampler)
+    X_int_train = torch.arange(-0.9, 1.1, 0.1).reshape(1, -1).T
     X_int_train.requires_grad=True
-    x_int_test = data_gen(space=full_space, n_samples=30, sampler=sampler)
+    x_int_test = data_gen(space=full_space, n_samples=30, sampler='random')
     y_int_test = torch.sin(np.pi*x_int_test)
 
     bc1 = torch.Tensor([-1.])
@@ -65,6 +66,7 @@ def main(pde,
     results = net.training(X_int_train,X_bc_train, x_int_test, y_bc_train,y_int_test, epochs)
 
 
+
     # Save accuracy results
     if not gamma_3:
         file_name = generate_file_name(pde=pde,
@@ -74,7 +76,7 @@ def main(pde,
                                        gamma_1=gamma_1,
                                        gamma_2=gamma_2
         )
-        results_directory = os.path.join(directory, f'results\\{pde}\\2layer\\{sampler}')
+        results_directory = os.path.join(directory, f'results\\{pde}\\2layer\\normalized\\')
     else:
         file_name = generate_file_name(pde=pde,
                                    epochs=epochs,
@@ -85,7 +87,7 @@ def main(pde,
                                    hidden_units_3=hidden_units_3,
                                    gamma_3=gamma_3
         )
-        results_directory = os.path.join(directory, f'results\\{pde}\\3layer\\{sampler}')
+        results_directory = os.path.join(directory, f'results\\{pde}\\3layer\\normalized\\')
     save_results(results=results,
                  directory=results_directory,
                  file_name=file_name
@@ -96,24 +98,22 @@ def main(pde,
 
 if __name__ == '__main__':
     pde='Poisson'
-    gamma_1 = 0.5
-    gamma_2 = 0.5
-    gamma_3 = 0.5
+    gamma_1_list = [0.5,0.6,0.7,0.8,0.9,1.0]
+    gamma_2_list = [0.5,0.6,0.7,0.8,0.9,1.0]
+    #gamma_3 = 0.5
     hidden_units_1=100
     hidden_units_2=100
-    hidden_units_3=100
-    epochs=4000
+    #hidden_units_3=100
+    epochs=10000
     directory=os.getcwd()
-    sampler_list = ['random', 'Halton', 'LHS', 'Sobol']
-    for sampler in sampler_list:
-        main(pde=pde,
+    #sampler_list = ['random', 'Halton', 'LHS', 'Sobol']
+    for gamma_1 in gamma_1_list:
+        for gamma_2 in gamma_2_list:            
+            main(pde=pde,
              gamma_1=gamma_1,
              gamma_2=gamma_2,
              hidden_units_1=hidden_units_1,
              hidden_units_2=hidden_units_2,
              epochs=epochs,
-             directory=directory,
-             sampler=sampler,
-             gamma_3=gamma_3,
-             hidden_units_3=hidden_units_3
+             directory=directory
         )

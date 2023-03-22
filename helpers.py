@@ -62,30 +62,30 @@ def data_gen(space, n_samples, sampler):
 def u_func(x):
     return (
         -(
-            torch.exp(x[:, 0:1]) * torch.sin(x[:, 1:2] + x[:, 2:3])
-            + torch.exp(x[:, 2:3]) * torch.cos(x[:, 0:1] + x[:, 1:2])
+            torch.exp(x[:, 1:2]) * torch.sin(x[:, 2:3]+ x[:, 3:4])
+            + torch.exp(x[:, 3:4]) * torch.cos(x[:, 1:2] + x[:, 2:3])
         )
-        * torch.exp(-x[:, 3:4])
+        * torch.exp(-x[:, 0:1])
     )
 
 
 def v_func(x):
     return (
         -(
-            torch.exp(x[:, 1:2]) * torch.sin(x[:, 2:3] +  x[:, 0:1])
-            + torch.exp(x[:, 0:1]) * torch.cos(x[:, 1:2] +  x[:, 2:3])
+            torch.exp(x[:, 2:3]) * torch.sin(x[:, 3:4] +  x[:, 1:2])
+            + torch.exp(x[:, 1:2]) * torch.cos(x[:, 2:3] +  x[:, 3:4])
         )
-        * torch.exp(-x[:, 3:4])
+        * torch.exp(-x[:, 0:1])
     )
 
 
 def w_func(x):
     return (
         -(
-            torch.exp(x[:, 2:3]) * torch.sin(x[:, 0:1] +  x[:, 1:2])
-            + torch.exp(x[:, 1:2]) * torch.cos(x[:, 2:3] +  x[:, 0:1])
+            torch.exp(x[:, 3:4]) * torch.sin(x[:, 1:2] +  x[:, 2:3])
+            + torch.exp(x[:, 2:3]) * torch.cos(x[:, 3:4] +  x[:, 1:2])
         )
-        * torch.exp(-x[:, 3:4])
+        * torch.exp(-x[:, 0:1])
     )
 
 
@@ -93,22 +93,22 @@ def p_func(x):
     return (
         -0.5
         * (
-            torch.exp(2 * x[:, 0:1])
-            + torch.exp(2 * x[:, 1:2])
+            torch.exp(2 * x[:, 1:2])
             + torch.exp(2 * x[:, 2:3])
-            + 2
-            * torch.sin(x[:, 0:1] +  x[:, 1:2])
-            * torch.cos(x[:, 2:3] +  x[:, 0:1])
-            * torch.exp((x[:, 1:2] + x[:, 2:3]))
+            + torch.exp(2 * x[:, 3:4])
             + 2
             * torch.sin(x[:, 1:2] +  x[:, 2:3])
-            * torch.cos(x[:, 0:1] +  x[:, 1:2])
-            * torch.exp((x[:, 2:3] + x[:, 0:1]))
+            * torch.cos(x[:, 3:4] +  x[:, 1:2])
+            * torch.exp((x[:, 2:3] + x[:, 3:4]))
             + 2
-            * torch.sin(x[:, 2:3] +  x[:, 0:1])
+            * torch.sin(x[:, 2:3] +  x[:, 3:4])
             * torch.cos(x[:, 1:2] +  x[:, 2:3])
-            * torch.exp((x[:, 0:1] + x[:, 1:2]))
+            * torch.exp((x[:, 3:4] + x[:, 1:2]))
+            + 2
+            * torch.sin(x[:, 3:4] +  x[:, 1:2])
+            * torch.cos(x[:, 2:3] +  x[:, 3:4])
+            * torch.exp((x[:, 1:2] + x[:, 2:3]))
         )
-        * torch.exp(-2 * x[:, 3:4])
+        * torch.exp(-2 * x[:, 0:1])
     )
 
