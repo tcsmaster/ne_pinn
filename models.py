@@ -135,7 +135,7 @@ class PoissonNet:
             loss_pde = self.mseloss(-du_dxx, (np.pi**2)*torch.sin(np.pi*X_int_train.squeeze()))
             
             loss = loss_pde + loss_bc
-            res.loc[e, 'Training Loss'] = loss.item()
+            res.loc[e, 'Training Loss'] = torch.sum(loss.item())
             loss.backward(retain_graph=True)
             self.optimizer.step()
      
@@ -188,13 +188,14 @@ class ReadyNet:
 
 class NSNet:
     def __init__(self, model):
-
+        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        self.model = model.to(device)
         self.model = model
         self.mseloss = torch.nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.model.parameters())
         self.state_dict = model.state_dict
     
-    def training(self, X_int_train,X_bic_train, X_int_test, y_bic_train, y_int_test, epochs):
+    def training(self, X_int_train,X_bic_train, y_bic_train, epochs):
         res = pd.DataFrame(None, columns=['Training Loss', 'Test Loss'], dtype=float)
         for e in range(epochs):
             self.model.train()
@@ -238,7 +239,7 @@ class NSNet:
             continuity = u_vel_x + v_vel_y + w_vel_z
             
             loss = momentum_x + momentum_y + momentum_z + continuity + loss_bic
-            res.loc[e, 'Training Loss'] = loss.item()
+            res.loc[e, 'Training Loss'] = torch.sum(loss.item())
             loss.backward(retain_graph=True)
             self.optimizer.step()
             '''

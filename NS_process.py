@@ -50,7 +50,7 @@ def main(pde,
     print(f"Model: {net.model}")
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     
-    h = 0.01
+    h = 0.1
     x = torch.arange(0, 1 + h, h, dtype=torch.float32)
     y = torch.arange(0, 1 + h, h, dtype=torch.float32)
     z = torch.arange(0, 1 + h, h, dtype=torch.float32)
@@ -69,7 +69,7 @@ def main(pde,
     ic1 = torch.stack(torch.meshgrid(t[0], x, y, z, indexing='ij')).reshape(4, -1).T
     ic2 = torch.stack(torch.meshgrid(t[1], x, y, z, indexing='ij')).reshape(4, -1).T
     X_bic_train = torch.cat([bc1, bc2, bc3,bc4,bc5,bc6,ic1,ic2]).to(device)
-    y_bic_train = torch.cat(u_func(X_bic_train),v_func(X_bic_train),w_func(X_bic_train),p_func(X_bic_train), dim=1).to(device)
+    y_bic_train = torch.cat((u_func(X_bic_train),v_func(X_bic_train),w_func(X_bic_train),p_func(X_bic_train)), dim=1).to(device)
     '''
     full_space = [torch.Tensor([-1., 0.]), torch.Tensor([1., 1.])]
     X_int_train = data_gen(space=full_space, n_samples=2000, sampler=sampler).to(device)
