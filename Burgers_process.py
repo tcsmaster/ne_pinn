@@ -9,7 +9,7 @@ def main(pde,
          hidden_units_2,
          epochs,
          directory,
-         sampler,
+         sampler=None,
          gamma_3 = None,
          hidden_units_3 = None
     ):
@@ -49,27 +49,29 @@ def main(pde,
         net = BurgersNet(MLP3(num_input=2,num_output=1,hidden_units_1=hidden_units_1, hidden_units_2=hidden_units_2, hidden_units_3=hidden_units_3, gamma_1=gamma_1, gamma_2=gamma_2, gamma_3=gamma_3))
     print(f"Model: {net.model}")
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    '''
+    
     h = 0.01
     x = torch.arange(-1, 1 + h, h)
     t = torch.arange(0, 1 + h, h)
         # exact solution
-    X = torch.stack(torch.meshgrid(x, t, indexing='ij')).reshape(2, -1).T
+    X = torch.stack(torch.meshgrid(x[1:-2], t[1:-2], indexing='ij')).reshape(2, -1).T
 
     # training data
     bc1 = torch.stack(torch.meshgrid(x[0], t, indexing='ij')).reshape(2, -1).T
     bc2 = torch.stack(torch.meshgrid(x[-1], t, indexing='ij')).reshape(2, -1).T
     ic = torch.stack(torch.meshgrid(x, t[0], indexing='ij')).reshape(2, -1).T
-    X_bic_train = torch.cat([bc1, bc2, ic])
+    X_bc_train = torch.cat([bc1, bc2])
     y_bc1 = torch.zeros(len(bc1))
     y_bc2 = torch.zeros(len(bc2))
-    y_ic = -torch.sin(np.pi * ic[:, 0])
-    y_train = torch.cat([y_bc1, y_bc2, y_ic])
-    y_train = y_train.unsqueeze(1)
+    y_ic = -torch.sin(np.pi * ic[:, 0]).unsqueeze(1)
+    y_bc_train = torch.cat([y_bc1, y_bc2])
+    y_bc_train = y_bc_train.unsqueeze(1)
     
     X = X.to(device)
-    X_bic_train = X_bic_train.to(device)
-    y_train = y_train.to(device)
+    X_bc_train = X_bc_train.to(device)
+    y_bc_train = y_bc_train.to(device)
+    ic = ic.to(device)
+    y_ic = y_ic.to(device)
     X.requires_grad = True
     '''
     full_space = [torch.Tensor([-1., 0.]), torch.Tensor([1., 1.])]
@@ -85,13 +87,14 @@ def main(pde,
     y_bc2 = torch.zeros(len(bc2))
     y_bc_train = torch.cat([y_bc1, y_bc2]).unsqueeze(1).to(device)
     y_ic_train = -torch.sin(np.pi*X_ic_train[:, 0]).unsqueeze(1).to(device)
-    results = net.training(X_int_train=X_int_train, X_bc_train=X_bc_train, X_ic_train=X_ic_train, y_bc_train=y_bc_train,y_ic_train=y_ic_train, epochs=epochs)
+    '''
+    results = net.training(X_int_train=X, X_bc_train=X_bc_train, X_ic_train=ic, y_bc_train=y_bc_train,y_ic_train=y_ic, epochs=epochs)
     
     # results = net.training(X_int_train=X,X_bic_train= X_bic_train, y_bic_train= y_train, epochs=epochs)
 
     # Save accuracy results
     if not gamma_3:
-        file_name = generate_file_name(epochs=epochs,
+        file_name = generate_file_name(pde=pde,epochs=epochs,
                                        hidden_units_1=hidden_units_1,
                                        hidden_units_2=hidden_units_2,
                                        gamma_1=gamma_1,
@@ -100,7 +103,7 @@ def main(pde,
         place = f'results\\Burgers\\2layer\\normalized\\'
         results_directory = os.path.join(directory, place)
     else:
-        file_name = generate_file_name(epochs=epochs,
+        file_name = generate_file_name(pde=pde,epochs=epochs,
                                    hidden_units_1=hidden_units_1,
                                    hidden_units_2=hidden_units_2,
                                    gamma_1=gamma_1,
@@ -121,21 +124,21 @@ def main(pde,
 
 if __name__ == '__main__':
     pde='Burgers'
-    gamma_1 = 0.5
-    gamma_2 = 0.5
+    gamma_1_list = [0.5, 0.7, 1.0]
+    gamma_2_list = [0.5, 0.7, 1.0]
     #gamma_3_list = [0.5, 0.7, 1.0]
     hidden_units_1=100
     hidden_units_2=100
     #hidden_units_3=100
     epochs=10000
-    sampler_list = ['random','LHS', 'Halton', 'Sobol']
+    #sampler_list = ['random','LHS', 'Halton', 'Sobol']
     directory=os.getcwd()
-    for sampler in sampler_list:
-        main(pde=pde,gamma_1=gamma_1,
+    for gamma_1 in gamma_1_list:
+        for gamma_2 in gamma_2_list:
+            main(pde=pde,gamma_1=gamma_1,
                      gamma_2=gamma_2,
                      hidden_units_1=hidden_units_1,
                      hidden_units_2=hidden_units_2,
                      epochs=epochs,
-                     directory=directory,
-                     sampler=sampler
+                     directory=directory
                 )
