@@ -21,7 +21,7 @@ class MLP2(nn.Module):
         the mean-field scaling parameter for the second hidden layer
     """
     
-    def __init__(self, num_input, num_output, hidden_units_1, hidden_units_2, gamma_1, gamma_2):
+    def __init__(self, num_input, num_output, hidden_units_1, hidden_units_2, gamma_1, gamma_2, sampler = None):
         super(MLP2, self).__init__()
         
         # Parameters
@@ -31,6 +31,7 @@ class MLP2(nn.Module):
         self.hidden_units_2 = hidden_units_2
         self.gamma_1 = gamma_1
         self.gamma_2 = gamma_2
+        self.sampler = sampler
         # Layers
         self.fc1 = nn.Linear(self.num_input, self.hidden_units_1)
         nn.init.normal_(self.fc1.weight, mean=0.0, std=1.0)
@@ -40,17 +41,18 @@ class MLP2(nn.Module):
         nn.init.uniform_(self.fc3.weight, a=0.0, b=1.0)
     
     def forward(self, x):
-        scaling_1 = self.hidden_units_1 ** (-self.gamma_1)
-        x = scaling_1 * torch.tanh(self.fc1(x))
-        scaling_2 = self.hidden_units_2**(-self.gamma_2)
-        x = scaling_2 * torch.tanh(self.fc2(x))
-        x = self.fc3(x)
-        '''
-        x = torch.tanh(self.fc1(x))
-        x = torch.tanh(self.fc2(x))
-        x = self.fc3(x)
-        '''
-        return x
+        if not self.sampler:
+            scaling_1 = self.hidden_units_1 ** (-self.gamma_1)
+            x = scaling_1 * torch.tanh(self.fc1(x))
+            scaling_2 = self.hidden_units_2**(-self.gamma_2)
+            x = scaling_2 * torch.tanh(self.fc2(x))
+            x = self.fc3(x)
+            return x
+        else:
+            x = torch.tanh(self.fc1(x))
+            x = torch.tanh(self.fc2(x))
+            x = self.fc3(x)
+            return x
     
 class MLP3(nn.Module):
     """Multi-layer perceptron with three hidden layers
@@ -71,7 +73,7 @@ class MLP3(nn.Module):
         the mean-field scaling parameter for the third hidden layer
     """
     
-    def __init__(self, num_input, num_output, hidden_units_1, hidden_units_2, hidden_units_3, gamma_1, gamma_2, gamma_3):
+    def __init__(self, num_input, num_output, hidden_units_1, hidden_units_2, hidden_units_3, gamma_1, gamma_2, gamma_3, sampler = None):
         super(MLP3, self).__init__()
         
         # Parameters
@@ -83,6 +85,7 @@ class MLP3(nn.Module):
         self.gamma_1 = gamma_1
         self.gamma_2 = gamma_2
         self.gamma_3 = gamma_3
+        self.sampler = sampler
         
         # Layers
         self.fc1 = nn.Linear(self.num_input, self.hidden_units_1)
@@ -95,29 +98,30 @@ class MLP3(nn.Module):
         nn.init.uniform_(self.fc4.weight, a=0.0, b=1.0)
     
     def forward(self, x):
-
-        scaling_1 = self.hidden_units_1 ** (-self.gamma_1)
-        x = scaling_1 * torch.tanh(self.fc1(x))
-        scaling_2 = self.hidden_units_2**(-self.gamma_2)
-        x = scaling_2 * torch.tanh(self.fc2(x))
-        scaling_3 = self.hidden_units_3**(-self.gamma_3)
-        x = scaling_3 * torch.tanh(self.fc3(x))
-        x = self.fc4(x)
-        '''
-        x = torch.tanh(self.fc1(x))
-        x = torch.tanh(self.fc2(x))
-        x = torch.tanh(self.fc3(x))
-        x = self.fc4(x)
-        '''
-        return x
+        if not self.sampler:
+            scaling_1 = self.hidden_units_1 ** (-self.gamma_1)
+            x = scaling_1 * torch.tanh(self.fc1(x))
+            scaling_2 = self.hidden_units_2**(-self.gamma_2)
+            x = scaling_2 * torch.tanh(self.fc2(x))
+            scaling_3 = self.hidden_units_3**(-self.gamma_3)
+            x = scaling_3 * torch.tanh(self.fc3(x))
+            x = self.fc4(x)
+            return x
+        
+        else:
+            x = torch.tanh(self.fc1(x))
+            x = torch.tanh(self.fc2(x))
+            x = torch.tanh(self.fc3(x))
+            x = self.fc4(x)
+            return x
     
 class PoissonNet:
     """
     This class is a blueprint for solving a 1D Heat equation with Dirichlet BC
     """
     def __init__(self, model):
-
-        self.model = model
+        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        self.model = model.to(device)
         self.mseloss = torch.nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.model.parameters())
     
@@ -154,7 +158,8 @@ class ReadyNet:
     A blueprint to create a physics-informed neural network to solve a 1D Reaction-diffusion equation.    
     """
     def __init__(self, model):
-        self.model = model
+        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        self.model = model.to(device)
         self.mseloss = torch.nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.model.parameters())
 
@@ -192,10 +197,8 @@ class NSNet:
     def __init__(self, model):
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self.model = model.to(device)
-        self.model = model
         self.mseloss = torch.nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.model.parameters())
-        self.state_dict = model.state_dict
     
     def training(self, X_int_train,X_bic_train, y_bic_train, epochs):
         res = pd.DataFrame(None, columns=['Training Loss', 'Test Loss'], dtype=float)
@@ -260,7 +263,6 @@ class BurgersNet:
         self.model = model.to(device)
         self.mseloss = torch.nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.model.parameters())
-        self.state_dict = self.model.state_dict()
     
     def training(self, X_int_train, X_bc_train, X_ic_train, y_bc_train,y_ic_train, epochs):
         res = pd.DataFrame(None, columns=['Training Loss'], dtype=float)
