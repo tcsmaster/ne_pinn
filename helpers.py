@@ -45,13 +45,13 @@ def data_gen(space, n_samples, sampler):
             raise ValueError('This sampling method has not been implemented yet!')
     else:
         if sampler == "LHS":
-            sampler = LatinHypercube(d=len(space))
+            sampler = LatinHypercube(d=len(space[0]))
             return torch.Tensor(scale(sampler.random(n=n_samples), l_bounds=space[0], u_bounds=space[1])).float()
         elif sampler == "Halton":
-            sampler = Halton(d=len(space))
+            sampler = Halton(d=len(space[0]))
             return torch.tensor(scale(sampler.random(n=n_samples), l_bounds=space[0], u_bounds=space[1])).float()
         elif sampler == "Sobol":
-            sampler = Sobol(d=len(space))
+            sampler = Sobol(d=len(space[0]))
             return torch.Tensor(scale(sampler.random(n=n_samples), l_bounds=space[0], u_bounds=space[1])).float()  #TODO: look into paper
         elif sampler== 'random':
             one_dim_points = np.random.default_rng().uniform(size=(n_samples, len(space)))
