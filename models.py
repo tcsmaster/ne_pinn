@@ -201,7 +201,7 @@ class NSNet:
         self.optimizer = torch.optim.Adam(self.model.parameters())
     
     def training(self, X_int_train,X_bic_train, y_bic_train, epochs):
-        res = pd.DataFrame(None, columns=['Training Loss', 'Test Loss'], dtype=float)
+        res = pd.DataFrame(None, columns=['Training Loss'], dtype=float)
         for e in range(epochs):
             self.model.train()
 
