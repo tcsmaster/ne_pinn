@@ -247,12 +247,13 @@ class NSNet:
             res.loc[e, 'Training Loss'] = loss.item()
             loss.backward(retain_graph=True)
             self.optimizer.step()
-
+            '''
             self.model.eval() 
             with torch.no_grad():
                 y_test_pred = self.model(X_bic_train)
                 test_loss = self.l2relativeloss(y_test_pred, y_bic_train)
                 res.loc[e, 'Test Loss'] = test_loss.item()
+            '''
         return res
     
 
