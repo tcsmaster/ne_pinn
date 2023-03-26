@@ -1,6 +1,7 @@
 import os
 from helpers import *
 from models import *
+from torch import device
 
 def main(pde,
          gamma_1,
@@ -48,7 +49,7 @@ def main(pde,
     else:
         net = PoissonNet(MLP3(num_input=1,num_output=1,hidden_units_1=hidden_units_1, hidden_units_2=hidden_units_2, hidden_units_3=hidden_units_3, gamma_1=gamma_1, gamma_2=gamma_2, gamma_3=gamma_3))
     print(f"Model: {net.model}")
-
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     full_space = [(-1., 1.)]
     #X_int_train = data_gen(space=full_space, n_samples=128, sampler=sampler)
     X_int_train = torch.arange(-0.9, 1.1, 0.1).reshape(1, -1).T
@@ -76,7 +77,7 @@ def main(pde,
                                        gamma_1=gamma_1,
                                        gamma_2=gamma_2
         )
-        results_directory = os.path.join(directory, f'results\\{pde}\\2layer\\normalized\\')
+        results_directory = os.path.join(directory, f'results/{pde}/2layer/normalized/')
     else:
         file_name = generate_file_name(pde=pde,
                                    epochs=epochs,
@@ -87,7 +88,7 @@ def main(pde,
                                    hidden_units_3=hidden_units_3,
                                    gamma_3=gamma_3
         )
-        results_directory = os.path.join(directory, f'results\\{pde}\\3layer\\normalized\\')
+        results_directory = os.path.join(directory, f'results/{pde}/3layer/normalized/')
     save_results(results=results,
                  directory=results_directory,
                  file_name=file_name

@@ -3,8 +3,7 @@ import torch.nn as nn
 import numpy as np
 import pandas as pd
 from helpers import *
-import warnings
-warnings.filterwarnings("error")
+
 
 class MLP2(nn.Module):
     """Multi-layer perceptron with two hidden layers

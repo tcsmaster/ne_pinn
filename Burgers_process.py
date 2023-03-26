@@ -80,7 +80,7 @@ def main(pde,
                                        gamma_1=gamma_1,
                                        gamma_2=gamma_2
         )
-            place = f'results\\{pde}\\2layer\\normalized\\'
+            place = f'results/{pde}/2layer/normalized/'
             results_directory = os.path.join(directory, place)
         else:
             file_name = generate_file_name(pde=pde,epochs=epochs,
@@ -91,7 +91,7 @@ def main(pde,
                                    hidden_units_3=hidden_units_3,
                                    gamma_3=gamma_3
         )
-            place = f'results\\{pde}\\3layer\\normalized\\'
+            place = f'results/{pde}/3layer/normalized/'
             results_directory = os.path.join(directory, place)
         save_results(results=results,
                  directory=results_directory,
@@ -125,7 +125,7 @@ def main(pde,
                                        gamma_1=gamma_1,
                                        gamma_2=gamma_2
         )
-            place = f'results\\Burgers\\2layer\\{sampler}\\'
+            place = f'results/{pde}/2layer/{sampler}/'
             results_directory = os.path.join(directory, place)
         else:
             file_name = generate_file_name(pde=pde,epochs=epochs,
@@ -136,7 +136,7 @@ def main(pde,
                                    hidden_units_3=hidden_units_3,
                                    gamma_3=gamma_3
         )
-            place = f'results\\Burgers\\3layer\\{sampler}\\'
+            place = f'results/{pde}/3layer/{sampler}/'
             results_directory = os.path.join(directory, place)
         save_results(results=results,
                  directory=results_directory,
