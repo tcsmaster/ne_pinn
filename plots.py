@@ -4,11 +4,6 @@ import matplotlib.pyplot as plt
 from helpers import generate_file_name
 
 plt.rcParams.update({                      # setup matplotlib to use latex for output
-    "pgf.texsystem": "pdflatex",        # change this if using xetex or lautex
-    "text.usetex": True,                # use LaTeX to write all text
-    "font.family": "serif",
-    "font.serif": [],                   # blank entries should cause plots to inherit fonts from the document
-    "font.sans-serif": [],
     "font.monospace": [],
     "figure.figsize": (12,8),
     "axes.labelsize": 20,               # LaTeX default is 10pt font.
@@ -21,27 +16,28 @@ plt.rcParams.update({                      # setup matplotlib to use latex for o
 
 def load_accuracy_for_single_gamma(pde:str,
                                    epochs:int,
-                                   hidden_units_1,
-                                   hidden_units_2,
-                                   gamma_1,
-                                   gamma_2,
+                                   hidden_units_1:int,
+                                   hidden_units_2:int,
+                                   gamma_1:float,
+                                   gamma_2:float,
                                    directory:str,
                                    hidden_units_3=None,
-                                   gamma_3 = None
+                                   gamma_3 = None,
+                                   sampler=None
     ):
 
-    # Determine data file name
-    if not gamma_3:
-        fname = generate_file_name(pde=pde,
+    if not sampler:
+        if not gamma_3:
+            fname = generate_file_name(pde=pde,
                                    epochs=epochs,
                                    hidden_units_1=hidden_units_1,
                                    hidden_units_2=hidden_units_2,
                                    gamma_1=gamma_1,
                                    gamma_2=gamma_2
         )
-        results_folder = f'results\\{pde}\\2layer\\normalized\\'
-    else:
-        fname = generate_file_name(pde=pde,
+            results_folder = f'results/{pde}/2layer/normalized/'
+        else:
+            fname = generate_file_name(pde=pde,
                                    epochs=epochs,
                                    hidden_units_1=hidden_units_1,
                                    hidden_units_2=hidden_units_2,
@@ -49,9 +45,30 @@ def load_accuracy_for_single_gamma(pde:str,
                                    gamma_2=gamma_2,
                                    hidden_units_3=hidden_units_3,
                                    gamma_3=gamma_3)
-        results_folder = f'results\\{pde}\\3layer\\normalized\\'
-
-    
+            results_folder = f'results/{pde}/3layer/normalized/'
+    else:
+        if not gamma_3:
+            fname = generate_file_name(pde=pde,
+                                   epochs=epochs,
+                                   hidden_units_1=hidden_units_1,
+                                   hidden_units_2=hidden_units_2,
+                                   gamma_1=gamma_1,
+                                   gamma_2=gamma_2,
+                                   sampler=sampler
+        )
+            results_folder = f'results/{pde}/2layer/{sampler}/'
+        else:
+            fname = generate_file_name(pde=pde,
+                                   epochs=epochs,
+                                   hidden_units_1=hidden_units_1,
+                                   hidden_units_2=hidden_units_2,
+                                   hidden_units_3 = hidden_units_3,
+                                   gamma_1=gamma_1,
+                                   gamma_2=gamma_2,
+                                   gamma_3 = gamma_3,
+                                   sampler=sampler
+        )
+            results_folder = f'results/{pde}/3layer/{sampler}/'
     # Create full path to data file, including extension
     path = os.path.join(directory, results_folder, fname) + '.csv'
     
@@ -64,24 +81,24 @@ def load_accuracy_for_single_gamma(pde:str,
 def load_all_accuracy(pde,
                       epochs,
                       acc,
-                      gamma1_list,
-                      gamma2_list, 
+                      gamma_1_list,
+                      gamma_2_list, 
                       hidden_units_1,
                       hidden_units_2,
                       directory,
                       hidden_units_3 =None, 
-                      gamma3_list =None
+                      gamma_3_list =None
     ):
     """Returns a DataFrame with either test or train accuracy by epoch for  
     lists of gamma values
     
     Parameters
     ----------
-    gamma1_list: list of floats
+    gamma_1_list: list of floats
         the mean-field scaling parameters for the first layer
-    gamma2_list: list of floats
+    gamma_2_list: list of floats
         the mean-field scaling parameters for the second layer
-    gamma3_list: list of floats
+    gamma_3_list: list of floats
         the mean-field scaling parameters for the third layer
     hidden_units_1: int
         the number of nodes in the first hidden layer
@@ -95,9 +112,9 @@ def load_all_accuracy(pde,
     dict_data = dict()
 
     # Iterate over list of gamma values and load accuracy data
-    if not gamma3_list:
-        for gamma_1 in gamma1_list:
-            for gamma_2 in gamma2_list:
+    if not gamma_3_list:
+        for gamma_1 in gamma_1_list:
+            for gamma_2 in gamma_2_list:
                 data = load_accuracy_for_single_gamma(pde=pde,
                                                       epochs=epochs,
                                                       hidden_units_1=hidden_units_1,
@@ -108,9 +125,9 @@ def load_all_accuracy(pde,
                 )
                 dict_data[(gamma_1,gamma_2)] = data[acc]
     else:
-        for gamma_1 in gamma1_list:
-            for gamma_2 in gamma2_list:
-                for gamma_3 in gamma3_list:
+        for gamma_1 in gamma_1_list:
+            for gamma_2 in gamma_2_list:
+                for gamma_3 in gamma_3_list:
                     data = load_accuracy_for_single_gamma(pde=pde,
                                                           epochs=epochs,
                                                           hidden_units_1=hidden_units_1,
@@ -127,11 +144,12 @@ def load_all_accuracy(pde,
     results = pd.concat(dict_data, axis=1)
     return results
 
+
 def run_2layer_accuracy_plots(pde,
                               epochs,
                               acc,
-                              gamma1_list,
-                              gamma2_list,
+                              gamma_1_list,
+                              gamma_2_list,
                               hidden_units_1,
                               hidden_units_2,
                               directory
@@ -141,9 +159,9 @@ def run_2layer_accuracy_plots(pde,
     
     Parameters
     ----------
-    gamma1_list: list of floats
+    gamma_1_list: list of floats
         the mean-field scaling parameters for the first layer 
-    gamma2_list: list of floats
+    gamma_2_list: list of floats
         the mean-field scaling parameters for the second layer 
     hidden_units_1: int
         the number of nodes in the first hidden layer
@@ -155,15 +173,15 @@ def run_2layer_accuracy_plots(pde,
     data = load_all_accuracy(pde=pde,
                              epochs=epochs,
                              acc=acc,
-                             gamma1_list=gamma1_list,
-                             gamma2_list=gamma2_list,
+                             gamma_1_list=gamma_1_list,
+                             gamma_2_list=gamma_2_list,
                              hidden_units_1=hidden_units_1,
                              hidden_units_2=hidden_units_2,
                              directory=directory)
-    figures_directory = os.path.join(directory, f"figures\\{pde}\\2layer\\")
+    figures_directory = os.path.join(directory, f"figures/{pde}/2layer/")
     if not os.path.isdir(figures_directory):
         os.makedirs(figures_directory)
-    for gamma_1 in gamma1_list:
+    for gamma_1 in gamma_1_list:
         
         # Create figure and plot data
         fig = plt.figure(figsize=(20, 10))
@@ -185,7 +203,7 @@ def run_2layer_accuracy_plots(pde,
         ax.figure.savefig(fig_path + '.jpg', dpi=300, bbox_inches='tight')
         plt.close('all')      
         
-    for gamma_2 in gamma2_list:
+    for gamma_2 in gamma_2_list:
         # Create figure and plot data
         fig = plt.figure(figsize=(20, 10))
         ax = data.xs(gamma_2, level=1, axis=1).plot()
@@ -212,9 +230,9 @@ def run_2layer_accuracy_plots(pde,
 def run_3layer_accuracy_plots(pde,
                               epochs,
                               acc,
-                              gamma1_list,
-                              gamma2_list,
-                              gamma3_list,
+                              gamma_1_list,
+                              gamma_2_list,
+                              gamma_3_list,
                               hidden_units_1,
                               hidden_units_2,
                               hidden_units_3, 
@@ -225,11 +243,11 @@ def run_3layer_accuracy_plots(pde,
     
     Parameters
     ----------
-    gamma1_list: list of floats
+    gamma_1_list: list of floats
         the mean-field scaling parameters for the first layer 
-    gamma2_list: list of floats
+    gamma_2_list: list of floats
         the mean-field scaling parameters for the second layer 
-    gamma3_list: list of floats
+    gamma_3_list: list of floats
         the mean-field scaling parameters for the third layer 
     hidden_units_1: int
         the number of nodes in the first hidden layer
@@ -245,9 +263,9 @@ def run_3layer_accuracy_plots(pde,
     data = load_all_accuracy(pde=pde,
                              epochs=epochs,
                              acc=acc,
-                             gamma1_list=gamma1_list,
-                             gamma2_list=gamma2_list,
-                             gamma3_list=gamma3_list,
+                             gamma_1_list=gamma_1_list,
+                             gamma_2_list=gamma_2_list,
+                             gamma_3_list=gamma_3_list,
                              hidden_units_1=hidden_units_1,
                              hidden_units_2=hidden_units_2,
                              hidden_units_3=hidden_units_3,
@@ -255,17 +273,17 @@ def run_3layer_accuracy_plots(pde,
     
     line_styles = ['solid', 'dashed', 'dotted']
     colors = ['blue', 'green', 'red']
-    figures_directory = os.path.join(directory, f'figures\\{pde}\\3layer')
+    figures_directory = os.path.join(directory, f'figures/{pde}/3layer')
     if not os.path.isdir(figures_directory):
         os.makedirs(figures_directory)
     # Create figures and plot data
-    for gamma_1 in gamma1_list:
+    for gamma_1 in gamma_1_list:
         
         fig = plt.figure(figsize=(20, 10))
         
         legend_labels = []
-        for count_1, gamma_2 in enumerate(gamma2_list):
-            for count_2, gamma_3 in enumerate(gamma3_list):
+        for count_1, gamma_2 in enumerate(gamma_2_list):
+            for count_2, gamma_3 in enumerate(gamma_3_list):
                 legend_labels += [(gamma_2, gamma_3)]
                 plt.plot(data[(gamma_1, gamma_2, gamma_3)],
                          color=colors[count_1],
@@ -289,14 +307,14 @@ def run_3layer_accuracy_plots(pde,
         ax.figure.savefig(fig_path + '.jpg', dpi=300, bbox_inches='tight')
         #ax.figure.savefig(fig_path + '.pdf', dpi=300, bbox_inches='tight')
         plt.close('all')
-    for gamma_2 in gamma2_list:
+    for gamma_2 in gamma_2_list:
         
         fig = plt.figure(figsize=(20, 10))
         
         legend_labels = []
-        for count_1, gamma_1 in enumerate(gamma1_list):
+        for count_1, gamma_1 in enumerate(gamma_1_list):
 
-            for count_2, gamma_3 in enumerate(gamma3_list):
+            for count_2, gamma_3 in enumerate(gamma_3_list):
                 legend_labels += [(gamma_1, gamma_3)]
                 plt.plot(
                     data[(gamma_1, gamma_2, gamma_3)],
@@ -321,13 +339,13 @@ def run_3layer_accuracy_plots(pde,
         ax.figure.savefig(fig_path + '.jpg', dpi=300, bbox_inches='tight')
         #ax.figure.savefig(fig_path + '.pdf', dpi=300, bbox_inches='tight')
         plt.close('all')
-    for gamma_3 in gamma3_list:
+    for gamma_3 in gamma_3_list:
         
         fig = plt.figure(figsize=(20, 10))
         
         legend_labels = []
-        for count_1, gamma_1 in enumerate(gamma1_list):
-            for count_2, gamma_2 in enumerate(gamma2_list):
+        for count_1, gamma_1 in enumerate(gamma_1_list):
+            for count_2, gamma_2 in enumerate(gamma_2_list):
                 legend_labels += [(gamma_1, gamma_2)]
                 plt.plot(
                     data[(gamma_1, gamma_2, gamma_3)],
@@ -420,3 +438,18 @@ def run_2layer_accuracy_plots_multiple_hidden_units(pde,
     #ax.figure.savefig(fig_path + '.pdf', dpi=300, bbox_inches='tight')
     plt.close('all')
     return
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

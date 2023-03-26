@@ -45,9 +45,9 @@ def main(pde,
         print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, g_3={gamma_3}, h_1={hidden_units_1}, h_2={hidden_units_2}, h_3={hidden_units_3}, epochs = {epochs}")
 
     if (not gamma_3):
-        net = PoissonNet(MLP2(num_input=1,num_output=1,hidden_units_1=hidden_units_1, hidden_units_2=hidden_units_2, gamma_1=gamma_1, gamma_2=gamma_2))
+        net = PoissonNet(MLP2(num_input=1,num_output=1,hidden_units_1=hidden_units_1, hidden_units_2=hidden_units_2, gamma_1=gamma_1, gamma_2=gamma_2, sampler=sampler))
     else:
-        net = PoissonNet(MLP3(num_input=1,num_output=1,hidden_units_1=hidden_units_1, hidden_units_2=hidden_units_2, hidden_units_3=hidden_units_3, gamma_1=gamma_1, gamma_2=gamma_2, gamma_3=gamma_3))
+        net = PoissonNet(MLP3(num_input=1,num_output=1,hidden_units_1=hidden_units_1, hidden_units_2=hidden_units_2, hidden_units_3=hidden_units_3, gamma_1=gamma_1, gamma_2=gamma_2, gamma_3=gamma_3, sampler=sampler))
     print(f"Model: {net.model}")
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     full_space = [(-1., 1.)]

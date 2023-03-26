@@ -29,9 +29,9 @@ def generate_file_name(pde,
             file_name = f"loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_hidden3_{hidden_units_3}_gamma1_{gamma_1}_gamma2_{gamma_2}_gamma3_{gamma_3}_epochs_{epochs}"
     else:
       if not hidden_units_3:
-            file_name = f"loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}_sampler_{sampler}"
+            file_name = f"loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_epochs_{epochs}_sampler_{sampler}"
       else:
-            file_name = f"loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_hidden3_{hidden_units_3}_gamma1_{gamma_1}_gamma2_{gamma_2}_gamma3_{gamma_3}_epochs_{epochs}_sampler_{sampler}"
+            file_name = f"loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_hidden3_{hidden_units_3}_epochs_{epochs}_sampler_{sampler}"
     return file_name
 
 def data_gen(space, n_samples, sampler):
