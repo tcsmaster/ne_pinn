@@ -1,5 +1,5 @@
 import os
-from utils import *
+
 from models import *
 
 def main(pde:str,
@@ -40,9 +40,9 @@ def main(pde:str,
     """ 
     print(f"PDE:Burgers")
     if (not gamma_3):
-        print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, h_1={hidden_units_1}, h_2={hidden_units_2}, epochs={epochs}")
+        print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, h_1={hidden_units_1}, h_2={hidden_units_2}, epochs={adam_epochs + lbfgs_epochs}")
     else:
-        print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, g_3={gamma_3}, h_1={hidden_units_1}, h_2={hidden_units_2}, h_3={hidden_units_3}, epochs = {epochs}")
+        print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, g_3={gamma_3}, h_1={hidden_units_1}, h_2={hidden_units_2}, h_3={hidden_units_3}, epochs = {adam_epochs + lbfgs_epochs}")
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     if (not gamma_3):
         net = BurgersNet(MLP2(num_input=2,

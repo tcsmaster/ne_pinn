@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
-from helpers import generate_file_name
+from utils import generate_file_name
 
 plt.rcParams.update({                      # setup matplotlib to use latex for output
     "font.monospace": [],

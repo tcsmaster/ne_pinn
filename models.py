@@ -1,8 +1,8 @@
-import torch
+#import torch
 import torch.nn as nn
-import numpy as np
+#import numpy as np
 import pandas as pd
-from helpers import *
+from utils import *
 from pdes import *
 
 
@@ -135,10 +135,7 @@ class PoissonNet:
             loss_bc = self.mseloss(y_bc_pred, y_bc_train)
             
             u = self.model(X_int_train)
-            du_dx = torch.autograd.grad(inputs=X_int_train, outputs=u, grad_outputs=torch.ones_like(u).to(self.device),retain_graph = True, create_graph=True)[0]
-            du_dxx = torch.autograd.grad(inputs=X_int_train, outputs=du_dx, grad_outputs=torch.ones_like(du_dx).to(self.device), retain_graph=True, create_graph=True)[0][:, 0]
-            #print(x.shape, u.squeeze().shape, du_dx.shape, du_dxx.shape)
-            loss_pde = self.mseloss(-du_dxx, (np.pi**2)*torch.sin(np.pi*X_int_train.squeeze()))
+            
             
             loss = loss_pde + loss_bc
             res.loc[e, 'Training Loss'] = torch.sum(loss.item())
@@ -198,24 +195,40 @@ class NSNet:
         self.device = device
         self.model = model.to(self.device)
         self.mseloss = torch.nn.MSELoss()
-        self.optimizer = torch.optim.Adam(self.model.parameters())
+        self.adam = torch.optim.Adam(self.model.parameters())
+        self.lbfgs = torch.optim.LBFGS(self.model.parameters())
     
-    def training(self, X_int_train,X_bic_train, y_bic_train, epochs, optimizer):
+    def training(self, X_int_train,X_bic_train, y_bic_train, adam_epochs,lbfgs_epochs):
         res = pd.DataFrame(None, columns=['Training Loss'], dtype=float)
-        for e in range(epochs):
-            self.model.train()
+        self.model.train()
+        for e in range(adam_epochs):
+            self.adam.zero_grad()
 
-            optimizer.zero_grad()
-            # order: t, x, y, z
             y_bic_pred = self.model(X_bic_train)
             loss_bic = self.mseloss(y_bic_pred, y_bic_train)
 
-            
             u = self.model(X_int_train)
-            loss = NSPDE(X_int_train,u, self.device)
+            loss_pde = NSPDE(X_int_train, u, self.device, self.mseloss)
+            
+            loss = loss_pde + loss_bic
             res.loc[e, 'Training Loss'] = loss.item()
             loss.backward()
-            optimizer.step()
+            self.adam.step()
+        print("We are done with Adam, moving into L-BFGS!")
+        for e in range(lbfgs_epochs):
+            def closure():
+                if torch.is_grad_enabled():
+                    self.lbfgs.zero_grad()
+                u = self.model(X_int_train)
+                loss_pde = NSPDE(X_int_train, u, self.device, self.mseloss)
+                y_bic_pred = self.model(X_bic_train)
+                loss_bic = self.mseloss(y_bic_pred, y_bic_train)
+                loss = loss_pde + loss_bic
+                res.loc[adam_epochs + e +1, 'Training Loss'] = loss.item()
+                if loss.requires_grad:
+                    loss.backward()
+                return loss
+            self.lbfgs.step(closure)
         return res
     
 
