@@ -118,9 +118,9 @@ class PoissonNet:
     """
     This class is a blueprint for solving a 1D Heat equation with Dirichlet BC
     """
-    def __init__(self, model):
-        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-        self.model = model.to(device)
+    def __init__(self, model, device):
+        self.device=device
+        self.model = model.to(self.device)
         self.mseloss = torch.nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.model.parameters())
     
@@ -134,8 +134,8 @@ class PoissonNet:
             loss_bc = self.mseloss(y_bc_pred, y_bc_train)
             
             u = self.model(X_int_train)
-            du_dx = torch.autograd.grad(inputs=X_int_train, outputs=u, grad_outputs=torch.ones_like(u),retain_graph = True, create_graph=True)[0]
-            du_dxx = torch.autograd.grad(inputs=X_int_train, outputs=du_dx, grad_outputs=torch.ones_like(du_dx), retain_graph=True, create_graph=True)[0][:, 0]
+            du_dx = torch.autograd.grad(inputs=X_int_train, outputs=u, grad_outputs=torch.ones_like(u).to(self.device),retain_graph = True, create_graph=True)[0]
+            du_dxx = torch.autograd.grad(inputs=X_int_train, outputs=du_dx, grad_outputs=torch.ones_like(du_dx).to(self.device), retain_graph=True, create_graph=True)[0][:, 0]
             #print(x.shape, u.squeeze().shape, du_dx.shape, du_dxx.shape)
             loss_pde = self.mseloss(-du_dxx, (np.pi**2)*torch.sin(np.pi*X_int_train.squeeze()))
             
@@ -156,9 +156,9 @@ class ReadyNet:
     """
     A blueprint to create a physics-informed neural network to solve a 1D Reaction-diffusion equation.    
     """
-    def __init__(self, model):
-        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-        self.model = model.to(device)
+    def __init__(self, model, device):
+        self.device=device
+        self.model = model.to(self.device)
         self.mseloss = torch.nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.model.parameters())
 
@@ -174,9 +174,9 @@ class ReadyNet:
 
             u = self.model(X_int_train)
 
-            du_dX = torch.autograd.grad(inputs=X_int_train, outputs=u, grad_outputs=torch.ones_like(u), retain_graph=True, create_graph=True)[0]
+            du_dX = torch.autograd.grad(inputs=X_int_train, outputs=u, grad_outputs=torch.ones_like(u).to(self.device), retain_graph=True, create_graph=True)[0]
             du_dt = du_dX[:, 1]
-            du_dxx = torch.autograd.grad(inputs=X_int_train, outputs=du_dX, grad_outputs=torch.ones_like(du_dX), retain_graph=True, create_graph=True)[0][:, 0]
+            du_dxx = torch.autograd.grad(inputs=X_int_train, outputs=du_dX, grad_outputs=torch.ones_like(du_dX).to(self.device), retain_graph=True, create_graph=True)[0][:, 0]
             # print(u.shape, du_dt.shape, du_dx.shape, du_dxx.shape)
             loss_pde = self.mseloss(du_dt, du_dxx + 1.5*torch.sin(2*X_int_train[:, 1]))
             
@@ -193,9 +193,9 @@ class ReadyNet:
         return res
 
 class NSNet:
-    def __init__(self, model):
-        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-        self.model = model.to(device)
+    def __init__(self, model, device):
+        self.device = device
+        self.model = model.to(self.device)
         self.mseloss = torch.nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.model.parameters())
     
@@ -212,27 +212,27 @@ class NSNet:
             
             u = self.model(X_int_train)
             u_vel,v_vel,w_vel,p=u[:, 0:1],u[:, 1:2],u[:, 2:3],u[:, 3:4]
-            du_dX = torch.autograd.grad(inputs=X_int_train,outputs=u_vel,grad_outputs=torch.ones_like(u_vel),retain_graph = True,create_graph=True)[0]
+            du_dX = torch.autograd.grad(inputs=X_int_train,outputs=u_vel,grad_outputs=torch.ones_like(u_vel).to(self.device),create_graph=True)[0]
             u_vel_t,u_vel_x,u_vel_y,u_vel_z = du_dX[:, 0],du_dX[:, 1],du_dX[:, 2],du_dX[:, 3]
-            u_vel_xx=torch.autograd.grad(inputs=X_int_train,outputs=u_vel_x,grad_outputs=torch.ones_like(u_vel_x),retain_graph = True,create_graph=True)[0][:, 1]
-            u_vel_yy=torch.autograd.grad(inputs=X_int_train,outputs=u_vel_y,grad_outputs=torch.ones_like(u_vel_y),retain_graph = True,create_graph=True)[0][:, 2]
-            u_vel_zz=torch.autograd.grad(inputs=X_int_train,outputs=u_vel_z,grad_outputs=torch.ones_like(u_vel_z),retain_graph = True,create_graph=True)[0][:, 3]
+            u_vel_xx=torch.autograd.grad(inputs=X_int_train,outputs=u_vel_x,grad_outputs=torch.ones_like(u_vel_x).to(self.device),retain_graph = True)[0][:, 1]
+            u_vel_yy=torch.autograd.grad(inputs=X_int_train,outputs=u_vel_y,grad_outputs=torch.ones_like(u_vel_y).to(self.device),retain_graph = True)[0][:, 2]
+            u_vel_zz=torch.autograd.grad(inputs=X_int_train,outputs=u_vel_z,grad_outputs=torch.ones_like(u_vel_z).to(self.device),retain_graph = True)[0][:, 3]
 
-            dv_dX = torch.autograd.grad(inputs=X_int_train, outputs=v_vel, grad_outputs=torch.ones_like(v_vel),retain_graph = True, create_graph=True)[0]
+            dv_dX = torch.autograd.grad(inputs=X_int_train, outputs=v_vel, grad_outputs=torch.ones_like(v_vel).to(self.device), create_graph=True)[0]
             v_vel_t, v_vel_x, v_vel_y,v_vel_z = dv_dX[:, 0], dv_dX[:, 1], dv_dX[:, 2], dv_dX[:, 3]
-            v_vel_xx = torch.autograd.grad(inputs=X_int_train, outputs=v_vel_x, grad_outputs=torch.ones_like(v_vel_x),retain_graph = True, create_graph=True)[0][:, 1]
-            v_vel_yy = torch.autograd.grad(inputs=X_int_train, outputs=v_vel_y, grad_outputs=torch.ones_like(v_vel_y),retain_graph = True, create_graph=True)[0][:, 2]
-            v_vel_zz = torch.autograd.grad(inputs=X_int_train, outputs=v_vel_z, grad_outputs=torch.ones_like(v_vel_z),retain_graph = True, create_graph=True)[0][:, 3]
+            v_vel_xx = torch.autograd.grad(inputs=X_int_train, outputs=v_vel_x, grad_outputs=torch.ones_like(v_vel_x).to(self.device),retain_graph = True)[0][:, 1]
+            v_vel_yy = torch.autograd.grad(inputs=X_int_train, outputs=v_vel_y, grad_outputs=torch.ones_like(v_vel_y).to(self.device),retain_graph = True)[0][:, 2]
+            v_vel_zz = torch.autograd.grad(inputs=X_int_train, outputs=v_vel_z, grad_outputs=torch.ones_like(v_vel_z).to(self.device),retain_graph = True)[0][:, 3]
 
-            dw_dX = torch.autograd.grad(inputs=X_int_train, outputs=w_vel, grad_outputs=torch.ones_like(u_vel),retain_graph = True, create_graph=True)[0]
+            dw_dX = torch.autograd.grad(inputs=X_int_train, outputs=w_vel, grad_outputs=torch.ones_like(u_vel).to(self.device),create_graph=True)[0]
             w_vel_t, w_vel_x, w_vel_y,w_vel_z = dw_dX[:, 0], dw_dX[:, 1], dw_dX[:, 2], dw_dX[:, 3]
-            w_vel_xx = torch.autograd.grad(inputs=X_int_train, outputs=w_vel_x, grad_outputs=torch.ones_like(w_vel_x),retain_graph = True, create_graph=True)[0][:, 1]
-            w_vel_yy = torch.autograd.grad(inputs=X_int_train, outputs=w_vel_y, grad_outputs=torch.ones_like(w_vel_y),retain_graph = True, create_graph=True)[0][:, 2]
-            w_vel_zz = torch.autograd.grad(inputs=X_int_train, outputs=w_vel_z, grad_outputs=torch.ones_like(w_vel_z),retain_graph = True, create_graph=True)[0][:, 3]
+            w_vel_xx = torch.autograd.grad(inputs=X_int_train, outputs=w_vel_x, grad_outputs=torch.ones_like(w_vel_x).to(self.device),retain_graph=True)[0][:, 1]
+            w_vel_yy = torch.autograd.grad(inputs=X_int_train, outputs=w_vel_y, grad_outputs=torch.ones_like(w_vel_y).to(self.device),retain_graph = True)[0][:, 2]
+            w_vel_zz = torch.autograd.grad(inputs=X_int_train, outputs=w_vel_z, grad_outputs=torch.ones_like(w_vel_z).to(self.device),retain_graph = True)[0][:, 3]
 
-            p_x = torch.autograd.grad(inputs=X_int_train, outputs=p, grad_outputs=torch.ones_like(p), retain_graph=True, create_graph=True)[0][:, 1]
-            p_y = torch.autograd.grad(inputs=X_int_train, outputs=p, grad_outputs=torch.ones_like(p), retain_graph=True, create_graph=True)[0][:, 2]
-            p_z = torch.autograd.grad(inputs=X_int_train, outputs=p, grad_outputs=torch.ones_like(p), retain_graph=True, create_graph=True)[0][:, 3]
+            p_x = torch.autograd.grad(inputs=X_int_train, outputs=p, grad_outputs=torch.ones_like(p).to(self.device), create_graph=True)[0][:, 1]
+            p_y = torch.autograd.grad(inputs=X_int_train, outputs=p, grad_outputs=torch.ones_like(p).to(self.device), retain_graph=True)[0][:, 2]
+            p_z = torch.autograd.grad(inputs=X_int_train, outputs=p, grad_outputs=torch.ones_like(p).to(self.device), retain_graph=True)[0][:, 3]
             
             momentum_x = self.mseloss(u_vel_t + u_vel.squeeze() * u_vel_x + v_vel.squeeze() * u_vel_y + w_vel.squeeze() * u_vel_z,\
                                       p_x - u_vel_xx - u_vel_yy - u_vel_zz)
@@ -244,7 +244,7 @@ class NSNet:
             
             loss = momentum_x + momentum_y + momentum_z + continuity + loss_bic
             res.loc[e, 'Training Loss'] = loss.item()
-            loss.backward(retain_graph=True)
+            loss.backward()
             self.optimizer.step()
             '''
             self.model.eval() 
@@ -257,9 +257,9 @@ class NSNet:
     
 
 class BurgersNet:
-    def __init__(self, model):
-        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-        self.model = model.to(device)
+    def __init__(self, model, device):
+        self.device=device
+        self.model = model.to(self.device)
         self.mseloss = torch.nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.model.parameters())
     
@@ -277,16 +277,16 @@ class BurgersNet:
             loss_ic = self.mseloss(y_ic_pred, y_ic_train)
 
             u = self.model(X_int_train)
-            du_dX = torch.autograd.grad(inputs=X_int_train, outputs=u, grad_outputs=torch.ones_like(u),retain_graph = True, create_graph=True)[0]
+            du_dX = torch.autograd.grad(inputs=X_int_train, outputs=u, grad_outputs=torch.ones_like(u).to(self.device),create_graph=True)[0]
             du_dt = du_dX[:,1]
             du_dx = du_dX[:,0]
-            du_dxx = torch.autograd.grad(inputs=X_int_train, outputs=du_dx, grad_outputs=torch.ones_like(du_dx), retain_graph=True, create_graph=True)[0][:, 0]
+            du_dxx = torch.autograd.grad(inputs=X_int_train, outputs=du_dx, grad_outputs=torch.ones_like(du_dx).to(self.device), retain_graph=True)[0][:, 0]
             #print(X_int_train.shape, u.squeeze().shape, du_dx.shape, du_dxx.shape)
             loss_pde = self.mseloss(du_dt + du_dx*u.squeeze(),-0.01/np.pi*du_dxx)
             
             loss = loss_pde + loss_bc + loss_ic
             res.loc[e, 'Training Loss'] = loss.item()
-            loss.backward(retain_graph=True)
+            loss.backward()
             self.optimizer.step()
             '''
             self.model.eval() 

@@ -42,13 +42,13 @@ def main(pde,
         print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, h_1={hidden_units_1}, h_2={hidden_units_2}, epochs={epochs}")
     else:
         print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, g_3={gamma_3}, h_1={hidden_units_1}, h_2={hidden_units_2}, h_3={hidden_units_3}, epochs = {epochs}")
-
-    if (not gamma_3):
-        net = BurgersNet(MLP2(num_input=2,num_output=1,hidden_units_1=hidden_units_1, hidden_units_2=hidden_units_2, gamma_1=gamma_1, gamma_2=gamma_2,sampler=sampler))
-    else:
-        net = BurgersNet(MLP3(num_input=2,num_output=1,hidden_units_1=hidden_units_1, hidden_units_2=hidden_units_2, hidden_units_3=hidden_units_3, gamma_1=gamma_1, gamma_2=gamma_2, gamma_3=gamma_3, sampler=sampler))
-    print(f"Model: {net.model}")
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    if (not gamma_3):
+        net = BurgersNet(MLP2(num_input=2,num_output=1,hidden_units_1=hidden_units_1, hidden_units_2=hidden_units_2, gamma_1=gamma_1, gamma_2=gamma_2,sampler=sampler), device=device)
+    else:
+        net = BurgersNet(MLP3(num_input=2,num_output=1,hidden_units_1=hidden_units_1, hidden_units_2=hidden_units_2, hidden_units_3=hidden_units_3, gamma_1=gamma_1, gamma_2=gamma_2, gamma_3=gamma_3, sampler=sampler), device=device)
+    print(f"Model: {net.model}")
+    
     if not sampler:
         h = 0.01
         x = torch.arange(-1, 1 + h, h)

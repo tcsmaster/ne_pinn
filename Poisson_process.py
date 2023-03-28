@@ -1,7 +1,7 @@
 import os
 from helpers import *
 from models import *
-from torch import device
+
 
 def main(pde,
          gamma_1,
@@ -43,13 +43,13 @@ def main(pde,
         print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, h_1={hidden_units_1}, h_2={hidden_units_2}, epochs={epochs}")
     else:
         print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, g_3={gamma_3}, h_1={hidden_units_1}, h_2={hidden_units_2}, h_3={hidden_units_3}, epochs = {epochs}")
-
-    if (not gamma_3):
-        net = PoissonNet(MLP2(num_input=1,num_output=1,hidden_units_1=hidden_units_1, hidden_units_2=hidden_units_2, gamma_1=gamma_1, gamma_2=gamma_2, sampler=sampler))
-    else:
-        net = PoissonNet(MLP3(num_input=1,num_output=1,hidden_units_1=hidden_units_1, hidden_units_2=hidden_units_2, hidden_units_3=hidden_units_3, gamma_1=gamma_1, gamma_2=gamma_2, gamma_3=gamma_3, sampler=sampler))
-    print(f"Model: {net.model}")
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    if (not gamma_3):
+        net = PoissonNet(MLP2(num_input=1,num_output=1,hidden_units_1=hidden_units_1, hidden_units_2=hidden_units_2, gamma_1=gamma_1, gamma_2=gamma_2, sampler=sampler), device=device)
+    else:
+        net = PoissonNet(MLP3(num_input=1,num_output=1,hidden_units_1=hidden_units_1, hidden_units_2=hidden_units_2, hidden_units_3=hidden_units_3, gamma_1=gamma_1, gamma_2=gamma_2, gamma_3=gamma_3, sampler=sampler), device=device)
+    print(f"Model: {net.model}")
+    
     full_space = [(-1., 1.)]
     #X_int_train = data_gen(space=full_space, n_samples=128, sampler=sampler)
     X_int_train = torch.arange(-0.9, 1.1, 0.1).reshape(1, -1).T
@@ -99,13 +99,13 @@ def main(pde,
 
 if __name__ == '__main__':
     pde='Poisson'
-    gamma_1_list = [0.5,0.6,0.7,0.8,0.9,1.0]
-    gamma_2_list = [0.5,0.6,0.7,0.8,0.9,1.0]
+    gamma_1_list = [0.5,0.7,1.0]
+    gamma_2_list = [0.5,0.7,1.0]
     #gamma_3 = 0.5
     hidden_units_1=100
     hidden_units_2=100
     #hidden_units_3=100
-    epochs=10000
+    epochs=20000
     directory=os.getcwd()
     #sampler_list = ['random', 'Halton', 'LHS', 'Sobol']
     for gamma_1 in gamma_1_list:
