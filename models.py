@@ -224,13 +224,14 @@ class BurgersNet:
         self.device=device
         self.model = model.to(self.device)
         self.mseloss = torch.nn.MSELoss()
-    
-    def training(self, X_int_train, X_bc_train, X_ic_train, y_bc_train,y_ic_train, epochs, optimizer):
-        res = pd.DataFrame(None, columns=['Training Loss'], dtype=float)
-        for e in range(epochs):
-            self.model.train()
+        self.adam = torch.optim.Adam(self.model.parameters())
+        self.lbfgs = torch.optim.LBFGS(self.model.parameters())
 
-            optimizer.zero_grad()
+    def training(self, X_int_train, X_bc_train, X_ic_train, y_bc_train,y_ic_train, adam_epochs, lbfgs_epochs):
+        res = pd.DataFrame(None, columns=['Training Loss'], dtype=float)
+        self.model.train()
+        for e in range(adam_epochs):
+            self.adam.zero_grad()
 
             y_bc_pred = self.model(X_bc_train)
             loss_bc = self.mseloss(y_bc_pred, y_bc_train)
@@ -239,17 +240,27 @@ class BurgersNet:
             loss_ic = self.mseloss(y_ic_pred, y_ic_train)
 
             u = self.model(X_int_train)
-            loss_pde = BurgersPDE(X_int_train, u, self.device)
+            loss_pde = BurgersPDE(X_int_train, u, self.device, self.mseloss)
             
             loss = loss_pde + loss_bc + loss_ic
             res.loc[e, 'Training Loss'] = loss.item()
             loss.backward()
-            self.optimizer.step()
-            '''
-            self.model.eval() 
-            with torch.no_grad():
-                y_test_pred = self.model(x_int_test)
-                test_loss = self.mseloss(y_test_pred, y_int_test)
-                res.loc[e, 'Test Loss'] = test_loss.item()
-            '''
+            self.adam.step()
+        print("We are done with Adam, moving into L-BFGS!")
+        for e in range(lbfgs_epochs):
+            def closure():
+                if torch.is_grad_enabled():
+                    self.lbfgs.zero_grad()
+                u = self.model(X_int_train)
+                loss_pde = BurgersPDE(X_int_train, u, self.device, self.mseloss)
+                y_bc_pred = self.model(X_bc_train)
+                loss_bc = self.mseloss(y_bc_pred, y_bc_train)
+                y_ic_pred = self.model(X_ic_train)
+                loss_ic = self.mseloss(y_ic_pred, y_ic_train)
+                loss = loss_pde + loss_bc + loss_ic
+                res.loc[adam_epochs + e +1, 'Training Loss'] = loss.item()
+                if loss.requires_grad:
+                    loss.backward()
+                return loss
+            self.lbfgs.step(closure)
         return res    

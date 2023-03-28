@@ -1,5 +1,5 @@
 import os
-from helpers import *
+from utils import *
 from models import *
 
 def main(pde,
@@ -7,7 +7,8 @@ def main(pde,
          gamma_2,
          hidden_units_1,
          hidden_units_2,
-         epochs,
+         adam_epochs,
+         lbfgs_epochs,
          directory,
          sampler=None,
          gamma_3 = None,
@@ -42,56 +43,135 @@ def main(pde,
         print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, h_1={hidden_units_1}, h_2={hidden_units_2}, epochs={epochs}")
     else:
         print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, g_3={gamma_3}, h_1={hidden_units_1}, h_2={hidden_units_2}, h_3={hidden_units_3}, epochs = {epochs}")
-
-    if (not gamma_3):
-        net = NSNet(MLP2(num_input=4,num_output=4,hidden_units_1=hidden_units_1, hidden_units_2=hidden_units_2, gamma_1=gamma_1, gamma_2=gamma_2, sampler=sampler))
-    else:
-        net = NSNet(MLP3(num_input=4,num_output=4,hidden_units_1=hidden_units_1, hidden_units_2=hidden_units_2, hidden_units_3=hidden_units_3, gamma_1=gamma_1, gamma_2=gamma_2, gamma_3=gamma_3, sampler=sampler))
-    print(f"Model: {net.model}")
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    if (not gamma_3):
+        net = NSNet(MLP2(num_input=4,
+                         num_output=4,
+                         hidden_units_1=hidden_units_1,
+                         hidden_units_2=hidden_units_2,
+                         gamma_1=gamma_1,
+                         gamma_2=gamma_2,
+                         sampler=sampler
+                    ),
+                    device=device)
+    else:
+        net = NSNet(MLP3(num_input=4,
+                         num_output=4,
+                         hidden_units_1=hidden_units_1,
+                         hidden_units_2=hidden_units_2,
+                         hidden_units_3=hidden_units_3,
+                         gamma_1=gamma_1,
+                         gamma_2=gamma_2,
+                         gamma_3=gamma_3,
+                         sampler=sampler
+                    ),
+                    device=device
+              )
+    print(f"Model: {net.model}")
+    
     if not sampler:
       h = 0.1
-      x = torch.arange(0, 1 + h, h, dtype=torch.float32)
-      y = torch.arange(0, 1 + h, h, dtype=torch.float32)
-      z = torch.arange(0, 1 + h, h, dtype=torch.float32)
-      t = torch.arange(0, 1 + h, h, dtype=torch.float32)
+      x = torch.arange(0,
+                       1 + h,
+                       h,
+                       dtype=torch.float32)
+      y = torch.arange(0,
+                       1 + h,
+                       h,
+                       dtype=torch.float32)
+      z = torch.arange(0,
+                       1 + h,
+                       h,
+                       dtype=torch.float32)
+      t = torch.arange(0,
+                       1 + h,
+                       h,
+                       dtype=torch.float32)
             # exact solution
-      X = torch.stack(torch.meshgrid(t[1:-2],x[1:-2],y[1:-2],z[1:-2], indexing='ij')).reshape(4, -1).T.to(device)
+      X = torch.stack(torch.meshgrid(t[1:-2],
+                                     x[1:-2],
+                                     y[1:-2],
+                                     z[1:-2],
+                                     indexing='ij')).reshape(4, -1).T.to(device)
       X.requires_grad = True
 
     # training data
-      bc1 = torch.stack(torch.meshgrid(t, x[0], y, z, indexing='ij')).reshape(4, -1).T
-      bc2 = torch.stack(torch.meshgrid(t, x[-1], y, z, indexing='ij')).reshape(4, -1).T
-      bc3 = torch.stack(torch.meshgrid(t, x, y[0], z, indexing='ij')).reshape(4, -1).T
-      bc4 = torch.stack(torch.meshgrid(t, x, y[-1], z, indexing='ij')).reshape(4, -1).T
-      bc5 = torch.stack(torch.meshgrid(t, x, y, z[0], indexing='ij')).reshape(4, -1).T
-      bc6 = torch.stack(torch.meshgrid(t, x, y, z[-1], indexing='ij')).reshape(4, -1).T
-      ic1 = torch.stack(torch.meshgrid(t[0], x, y, z, indexing='ij')).reshape(4, -1).T
-      ic2 = torch.stack(torch.meshgrid(t[1], x, y, z, indexing='ij')).reshape(4, -1).T
+      bc1 = torch.stack(torch.meshgrid(t,
+                                       x[0],
+                                       y,
+                                       z,
+                                       indexing='ij')).reshape(4, -1).T
+      bc2 = torch.stack(torch.meshgrid(t,
+                                       x[-1],
+                                       y,
+                                       z,
+                                       indexing='ij')).reshape(4, -1).T
+      bc3 = torch.stack(torch.meshgrid(t,
+                                       x,
+                                       y[0],
+                                       z,
+                                       indexing='ij')).reshape(4, -1).T
+      bc4 = torch.stack(torch.meshgrid(t,
+                                       x,
+                                       y[-1],
+                                       z,
+                                       indexing='ij')).reshape(4, -1).T
+      bc5 = torch.stack(torch.meshgrid(t,
+                                       x,
+                                       y,
+                                       z[0],
+                                       indexing='ij')).reshape(4, -1).T
+      bc6 = torch.stack(torch.meshgrid(t,
+                                       x,
+                                       y,
+                                       z[-1],
+                                       indexing='ij')).reshape(4, -1).T
+      ic1 = torch.stack(torch.meshgrid(t[0],
+                                       x,
+                                       y,
+                                       z,
+                                       indexing='ij')).reshape(4, -1).T
+      ic2 = torch.stack(torch.meshgrid(t[1],
+                                       x,
+                                       y,
+                                       z,
+                                       indexing='ij')).reshape(4, -1).T
       X_bic_train = torch.cat([bc1, bc2, bc3,bc4,bc5,bc6,ic1,ic2]).to(device)
-      y_bic_train = torch.cat((u_func(X_bic_train),v_func(X_bic_train),w_func(X_bic_train),p_func(X_bic_train)), dim=1).to(device)
-      results = net.training(X_int_train=X,X_bic_train= X_bic_train, y_bic_train= y_bic_train, epochs=epochs)
+      y_bic_train = torch.cat((u_func(X_bic_train),
+                               v_func(X_bic_train),
+                               w_func(X_bic_train),
+                               p_func(X_bic_train)),
+                               dim=1).to(device)
+      results = net.training(X_int_train=X,
+                             X_bic_train=X_bic_train,
+                             y_bic_train=y_bic_train,
+                             adam_epochs=adam_epochs,
+                             lbfgs_epochs=lbfgs_epochs)
       if not gamma_3:
-        file_name = generate_file_name(pde=pde,epochs=epochs,
+        file_name = generate_file_name(pde=pde,
+                                       epochs=adam_epochs+lbfgs_epochs,
                                        hidden_units_1=hidden_units_1,
                                        hidden_units_2=hidden_units_2,
-                                       gamma_1=gamma_1,gamma_2=gamma_2)
+                                       gamma_1=gamma_1,
+                                       gamma_2=gamma_2
+                    )
         place = f'results/{pde}/2layer/normalized/'
         results_directory = os.path.join(directory, place)
       else:
-         file_name =generate_file_name(pde=pde,epochs=epochs,
-                                      hidden_units_1=hidden_units_1,
-                                   hidden_units_2=hidden_units_2,
-                                   gamma_1=gamma_1,
-                                   gamma_2=gamma_2,
-                                   hidden_units_3=hidden_units_3,
-                                   gamma_3=gamma_3
-        )
+         file_name =generate_file_name(pde=pde,
+                                       epochs=adam_epochs+lbfgs_epochs,
+                                       hidden_units_1=hidden_units_1,
+                                       hidden_units_2=hidden_units_2,
+                                       gamma_1=gamma_1,
+                                       gamma_2=gamma_2,
+                                       hidden_units_3=hidden_units_3,
+                                       gamma_3=gamma_3
+                    )
       place = f'results/{pde}/3layer/normalized/'
       results_directory = os.path.join(directory, place)
       save_results(results=results,
-                 directory=results_directory,
-                 file_name=file_name
+                   directory=results_directory,
+                   file_name=file_name
       )
       path = os.path.join(results_directory, file_name) + '_model.pth'
       torch.save(net.model.state_dict(), path)
