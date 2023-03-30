@@ -195,26 +195,11 @@ class NSNet:
         self.device = device
         self.model = model.to(self.device)
         self.mseloss = torch.nn.MSELoss()
-        self.adam = torch.optim.Adam(self.model.parameters())
         self.lbfgs = torch.optim.LBFGS(self.model.parameters())
     
     def training(self, X_int_train,X_bic_train, y_bic_train, adam_epochs,lbfgs_epochs):
         res = pd.DataFrame(None, columns=['Training Loss'], dtype=float)
         self.model.train()
-        for e in range(adam_epochs):
-            self.adam.zero_grad()
-
-            y_bic_pred = self.model(X_bic_train)
-            loss_bic = self.mseloss(y_bic_pred, y_bic_train)
-
-            u = self.model(X_int_train)
-            loss_pde = NSPDE(X_int_train, u, self.device, self.mseloss)
-            
-            loss = loss_pde + loss_bic
-            res.loc[e, 'Training Loss'] = loss.item()
-            loss.backward()
-            self.adam.step()
-        print("We are done with Adam, moving into L-BFGS!")
         for e in range(lbfgs_epochs):
             def closure():
                 if torch.is_grad_enabled():
@@ -224,7 +209,7 @@ class NSNet:
                 y_bic_pred = self.model(X_bic_train)
                 loss_bic = self.mseloss(y_bic_pred, y_bic_train)
                 loss = loss_pde + loss_bic
-                res.loc[adam_epochs + e +1, 'Training Loss'] = loss.item()
+                res.loc[e, 'Training Loss'] = loss.item()
                 if loss.requires_grad:
                     loss.backward()
                 return loss
@@ -238,42 +223,22 @@ class BurgersNet:
         self.model = model.to(self.device)
         self.mseloss = torch.nn.MSELoss()
         self.adam = torch.optim.Adam(self.model.parameters())
-        self.lbfgs = torch.optim.LBFGS(self.model.parameters())
 
-    def training(self, X_int_train, X_bc_train, X_ic_train, y_bc_train,y_ic_train, adam_epochs, lbfgs_epochs):
+    def training(self, X_int_train, X_bc_train, X_ic_train, y_bc_train,y_ic_train, lbfgs_epochs):
         res = pd.DataFrame(None, columns=['Training Loss'], dtype=float)
         self.model.train()
-        for e in range(adam_epochs):
+        for e in range(lbfgs_epochs):
             self.adam.zero_grad()
-
-            y_bc_pred = self.model(X_bc_train)
-            loss_bc = self.mseloss(y_bc_pred, y_bc_train)
-
-            y_ic_pred = self.model(X_ic_train)
-            loss_ic = self.mseloss(y_ic_pred, y_ic_train)
-
             u = self.model(X_int_train)
             loss_pde = BurgersPDE(X_int_train, u, self.device, self.mseloss)
-            
+            y_bc_pred = self.model(X_bc_train)
+            loss_bc = self.mseloss(y_bc_pred, y_bc_train)
+            y_ic_pred = self.model(X_ic_train)
+            loss_ic = self.mseloss(y_ic_pred, y_ic_train)
             loss = loss_pde + loss_bc + loss_ic
             res.loc[e, 'Training Loss'] = loss.item()
             loss.backward()
             self.adam.step()
-        print("We are done with Adam, moving into L-BFGS!")
-        for e in range(lbfgs_epochs):
-            def closure():
-                if torch.is_grad_enabled():
-                    self.lbfgs.zero_grad()
-                u = self.model(X_int_train)
-                loss_pde = BurgersPDE(X_int_train, u, self.device, self.mseloss)
-                y_bc_pred = self.model(X_bc_train)
-                loss_bc = self.mseloss(y_bc_pred, y_bc_train)
-                y_ic_pred = self.model(X_ic_train)
-                loss_ic = self.mseloss(y_ic_pred, y_ic_train)
-                loss = loss_pde + loss_bc + loss_ic
-                res.loc[adam_epochs + e +1, 'Training Loss'] = loss.item()
-                if loss.requires_grad:
-                    loss.backward()
-                return loss
-            self.lbfgs.step(closure)
+            if e%1000 == 0:
+                print('Loss at epoch ', e, ' : ', res.loc[e, 'Training Loss'])
         return res    
