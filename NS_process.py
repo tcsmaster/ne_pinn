@@ -2,6 +2,32 @@ import os
 from utils import *
 from models import *
 
+
+class NSNet:
+    def __init__(self, model, device):
+        self.device = device
+        self.model = model.to(self.device)
+        self.mseloss = torch.nn.MSELoss()
+        
+    
+    def training_step(self, X_int_train,X_bic_train, y_bic_train, epochs):
+        self.model.train()
+        for e in range(epochs):
+            def closure():
+                if torch.is_grad_enabled():
+                    self.lbfgs.zero_grad()
+                u = self.model(X_int_train)
+                loss_pde = NSPDE(X_int_train, u, self.device, self.mseloss)
+                y_bic_pred = self.model(X_bic_train)
+                loss_bic = self.mseloss(y_bic_pred, y_bic_train)
+                loss = loss_pde + loss_bic
+                res.loc[e, 'Training Loss'] = loss.item()
+                if loss.requires_grad:
+                    loss.backward()
+                return loss
+            self.lbfgs.step(closure)
+        return 
+
 def main(pde,
          gamma_1,
          gamma_2,
