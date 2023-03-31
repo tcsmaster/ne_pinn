@@ -29,6 +29,9 @@ class BoundaryData(Dataset):
     def __init__(self, sampler=None) -> None:
         super().__init__()
         if not sampler:
+            h = 0.01
+            x = torch.arange(-1, 1 + h, h)
+            t = torch.arange(0, 1 + h, h)
             bc1 = torch.stack(torch.meshgrid(x[0],
                                              t,
                                              indexing='ij')).reshape(2, -1).T
@@ -64,18 +67,30 @@ class BoundaryData(Dataset):
 
     def __getitem__(self, index):
         return self.X_bc_train[index, :], self.y_bc_train[index, :]
+
+class InitialData(Dataset):
+    def __init__(self, sampler) -> None:
+        super().__init__()
+        if not sampler:
+            h = 0.01
+            x = torch.arange(-1, 1 + h, h)
+            t = torch.arange(0, 1 + h, h)
             ic = torch.stack(torch.meshgrid(x,
-                                        t[0],
-                                        indexing='ij')).reshape(2, -1).T
-            
-            
+                                            t[0],
+                                            indexing='ij')).reshape(2, -1).T         
             y_ic_train = -torch.sin(np.pi * ic[:, 0]).unsqueeze(1)
-            
-            y_bc_train = y_bc_train.unsqueeze(1)
+            self.X_ic_train = ic
+            self.y_ic_train = y_ic_train
+    
+    def __len__(self):
+        return self.X_ic_train.shape[0]
+
+    def __getitem__(self, index):
+        return self.X_ic_train[index, :], self.y_ic_train[index, :]
 
 class BurgersNet(lt.LightningModule):
     def __init__(self, model):
-        self.device=device
+        self.model=model
     
     def configure_optimizers(self):
         if condition:
@@ -84,22 +99,18 @@ class BurgersNet(lt.LightningModule):
             return torch.optim.LBFGS(self.model.parameters()) 
 
     def training_step(self, X_int_train, X_bc_train, X_ic_train, y_bc_train,y_ic_train):
+        res = pd.DataFrame(None, columns = ["Training Loss"], dtypes=float)
         self.model.train()
         for e in range(epochs):
             self.adam.zero_grad()
             u = self.model(X_int_train)
-            loss_pde = BurgersPDE(X_int_train, u, self.device, torch.nn.MSELoss)
+            loss_pde = BurgersPDE(X_int_train, u, torch.nn.MSELoss)
             y_bc_pred = self.model(X_bc_train)
-            loss_bc = self.mseloss(y_bc_pred, y_bc_train)
+            loss_bc = torch.nn.MSELmseloss(y_bc_pred, y_bc_train)
             y_ic_pred = self.model(X_ic_train)
-            loss_ic = self.mseloss(y_ic_pred, y_ic_train)
+            loss_ic = torch.nn.MSELoss(y_ic_pred, y_ic_train)
             loss = loss_pde + loss_bc + loss_ic
-            res.loc[e, 'Training Loss'] = loss.item()
-            loss.backward()
-            self.adam.step()
-            if e%1000 == 0:
-                wandb.log({"loss": loss})
-        return res
+            return loss
 def main(pde:str,
          gamma_1:float,
          gamma_2:float,
@@ -166,10 +177,9 @@ def main(pde:str,
                          device=device
               )
     print(f"Model: {net.model}")
-    wandb.init()
+    wandb_logger = = WandbLogger()
     wandb.watch(net.model, log_freq=1000)
     if not sampler:
-        
         results = net.training(X_int_train=X,
                                X_bc_train=X_bc_train,
                                X_ic_train=ic,
