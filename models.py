@@ -4,6 +4,7 @@ import torch.nn as nn
 import pandas as pd
 from utils import *
 from pdes import *
+import wandb
 
 
 class MLP2(nn.Module):
@@ -197,10 +198,10 @@ class NSNet:
         self.mseloss = torch.nn.MSELoss()
         self.lbfgs = torch.optim.LBFGS(self.model.parameters())
     
-    def training(self, X_int_train,X_bic_train, y_bic_train, adam_epochs,lbfgs_epochs):
+    def training(self, X_int_train,X_bic_train, y_bic_train, adam_epochs,epochs):
         res = pd.DataFrame(None, columns=['Training Loss'], dtype=float)
         self.model.train()
-        for e in range(lbfgs_epochs):
+        for e in range(epochs):
             def closure():
                 if torch.is_grad_enabled():
                     self.lbfgs.zero_grad()
@@ -222,12 +223,19 @@ class BurgersNet:
         self.device=device
         self.model = model.to(self.device)
         self.mseloss = torch.nn.MSELoss()
-        self.adam = torch.optim.Adam(self.model.parameters())
+    
 
-    def training(self, X_int_train, X_bc_train, X_ic_train, y_bc_train,y_ic_train, lbfgs_epochs):
+    def training_step(self, )
+    def configure_optimizers(self):
+        if condition:
+            return torch.optim.Adam(self.model.parameters())
+        else:
+            return torch.optim.LBFGS(self.model.parameters()) 
+
+    def training(self, X_int_train, X_bc_train, X_ic_train, y_bc_train,y_ic_train, epochs):
         res = pd.DataFrame(None, columns=['Training Loss'], dtype=float)
         self.model.train()
-        for e in range(lbfgs_epochs):
+        for e in range(epochs):
             self.adam.zero_grad()
             u = self.model(X_int_train)
             loss_pde = BurgersPDE(X_int_train, u, self.device, self.mseloss)
@@ -240,5 +248,5 @@ class BurgersNet:
             loss.backward()
             self.adam.step()
             if e%1000 == 0:
-                print('Loss at epoch ', e, ' : ', res.loc[e, 'Training Loss'])
+                wandb.log({"loss": loss})
         return res    
