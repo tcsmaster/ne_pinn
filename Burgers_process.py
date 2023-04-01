@@ -1,92 +1,8 @@
 import os
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader, ConcatDataset
 import wandb
 import lightning.pytorch as lt
 from models import *
-
-class TrainingData(Dataset):
-    def __init__(self, sampler=None) -> None:
-        super().__init__()
-        if not sampler:
-            h = 0.01
-            x = torch.arange(-1, 1 + h, h)
-            t = torch.arange(0, 1 + h, h)
-            X_train = torch.stack(torch.meshgrid(x[1:-2], t[1:-2], indexing='ij')).reshape(2, -1).T
-            X_train.requires_grad = True
-            self.X_train = X_train
-        else:
-            full_space = [torch.Tensor([-1., 0.]), torch.Tensor([1., 1.])]
-            X_int_train = data_gen(space=full_space, n_samples=2000, sampler=sampler).to(device)
-            X_int_train.requires_grad=True
-            self.X_train = X_train
-    def __len__(self):
-        return self.X_train.shape[0]
-    
-    def __getitem__(self, index):
-        return self.X_train[index, :]
-
-class BoundaryData(Dataset):
-    def __init__(self, sampler=None) -> None:
-        super().__init__()
-        if not sampler:
-            h = 0.01
-            x = torch.arange(-1, 1 + h, h)
-            t = torch.arange(0, 1 + h, h)
-            bc1 = torch.stack(torch.meshgrid(x[0],
-                                             t,
-                                             indexing='ij')).reshape(2, -1).T
-            bc2 = torch.stack(torch.meshgrid(x[-1],
-                                             t,
-                                             indexing='ij')).reshape(2, -1).T
-            X_bc_train = torch.cat([bc1, bc2])
-            y_bc1 = torch.zeros(len(bc1))
-            y_bc2 = torch.zeros(len(bc2))
-            y_bc_train = torch.cat([y_bc1, y_bc2]).unsqueeze(1)
-            self.X_bc_train = X_bc_train
-            self.y_bc_train = y_bc_train
-        else:
-            bc1 = torch.stack(torch.meshgrid(torch.Tensor([-1.]),
-                                             data_gen(space=[torch.Tensor([0., 1.])],
-                                                      n_samples=100,
-                                                      sampler=sampler).squeeze(),
-                                             indexing='ij')).reshape(2, -1).T
-            bc2 = torch.stack(torch.meshgrid(torch.Tensor([1.]),
-                                             data_gen(space=[torch.Tensor([0., 1.])],
-                                                      n_samples=100,
-                                                      sampler=sampler).squeeze(),
-                                             indexing='ij')).reshape(2, -1).T
-            X_bc_train = torch.cat([bc1, bc2])
-            y_bc1 = torch.zeros(len(bc1))
-            y_bc2 = torch.zeros(len(bc2))
-            y_bc_train = torch.cat([y_bc1, y_bc2]).unsqueeze(1)
-            self.X_bc_train = X_bc_train
-            self.y_bc_train = y_bc_train
-    
-    def __len__(self):
-        return self.X_bc_train.shape[0]
-
-    def __getitem__(self, index):
-        return self.X_bc_train[index, :], self.y_bc_train[index, :]
-
-class InitialData(Dataset):
-    def __init__(self, sampler) -> None:
-        super().__init__()
-        if not sampler:
-            h = 0.01
-            x = torch.arange(-1, 1 + h, h)
-            t = torch.arange(0, 1 + h, h)
-            ic = torch.stack(torch.meshgrid(x,
-                                            t[0],
-                                            indexing='ij')).reshape(2, -1).T         
-            y_ic_train = -torch.sin(np.pi * ic[:, 0]).unsqueeze(1)
-            self.X_ic_train = ic
-            self.y_ic_train = y_ic_train
-    
-    def __len__(self):
-        return self.X_ic_train.shape[0]
-
-    def __getitem__(self, index):
-        return self.X_ic_train[index, :], self.y_ic_train[index, :]
 
 class BurgersNet(lt.LightningModule):
     def __init__(self, model):
@@ -98,8 +14,11 @@ class BurgersNet(lt.LightningModule):
         else:
             return torch.optim.LBFGS(self.model.parameters()) 
 
-    def training_step(self, X_int_train, X_bc_train, X_ic_train, y_bc_train,y_ic_train):
+    def training(self, X_int_train, X_bc_train, X_ic_train, y_bc_train,y_ic_train):
         res = pd.DataFrame(None, columns = ["Training Loss"], dtypes=float)
+        optimizer = optim.LBFGS(model.parameters(), lr=0.003)
+        Use_Adam_optim_FirstTime=True
+        Use_LBFGS_optim=True
         self.model.train()
         for e in range(epochs):
             self.adam.zero_grad()
@@ -111,6 +30,10 @@ class BurgersNet(lt.LightningModule):
             loss_ic = torch.nn.MSELoss(y_ic_pred, y_ic_train)
             loss = loss_pde + loss_bc + loss_ic
             return loss
+
+
+
+
 def main(pde:str,
          gamma_1:float,
          gamma_2:float,
@@ -177,10 +100,29 @@ def main(pde:str,
                          device=device
               )
     print(f"Model: {net.model}")
-    wandb_logger = = WandbLogger()
+    wandb_logger = WandbLogger()
     wandb.watch(net.model, log_freq=1000)
     if not sampler:
-        results = net.training(X_int_train=X,
+        h = 0.01
+        x = torch.arange(-1, 1 + h, h)
+        t = torch.arange(0, 1 + h, h)
+        X_int_train = torch.stack(torch.meshgrid(x[1:-2], t[1:-2], indexing='ij')).reshape(2, -1).T
+        X_int_train.requires_grad = True
+        bc1 = torch.stack(torch.meshgrid(x[0],
+                                             t,
+                                             indexing='ij')).reshape(2, -1).T
+        bc2 = torch.stack(torch.meshgrid(x[-1],
+                                             t,
+                                             indexing='ij')).reshape(2, -1).T
+        X_bc_train = torch.cat([bc1, bc2])
+        y_bc1 = torch.zeros(len(bc1))
+        y_bc2 = torch.zeros(len(bc2))
+        y_bc_train = torch.cat([y_bc1, y_bc2]).unsqueeze(1)
+        ic = torch.stack(torch.meshgrid(x,
+                                        t[0],
+                                        indexing='ij')).reshape(2, -1).T         
+        y_ic_train = -torch.sin(np.pi * ic[:, 0]).unsqueeze(1)
+        results = net.training(X_int_train=X_int_train,
                                X_bc_train=X_bc_train,
                                X_ic_train=ic,
                                y_bc_train=y_bc_train,
@@ -218,12 +160,25 @@ def main(pde:str,
         torch.save(net.model.state_dict(), path)
 
     else:
-        
-    
-        
+        full_space = [torch.Tensor([-1., 0.]), torch.Tensor([1., 1.])]
+        X_int_train = data_gen(space=full_space, n_samples=2000, sampler=sampler).to(device)
+        X_int_train.requires_grad=True
+        bc1 = torch.stack(torch.meshgrid(torch.Tensor([-1.]),
+                                         data_gen(space=[torch.Tensor([0., 1.])],
+                                                  n_samples=100,
+                                                  sampler=sampler).squeeze(),
+                                         indexing='ij')).reshape(2, -1).T
+        bc2 = torch.stack(torch.meshgrid(torch.Tensor([1.]),
+                                         data_gen(space=[torch.Tensor([0., 1.])],
+                                                  n_samples=100,
+                                                  sampler=sampler).squeeze(),
+                                         indexing='ij')).reshape(2, -1).T
+        X_bc_train = torch.cat([bc1, bc2])
+        y_bc1 = torch.zeros(len(bc1))
+        y_bc2 = torch.zeros(len(bc2))
+        y_bc_train = torch.cat([y_bc1, y_bc2]).unsqueeze(1)
         X_ic_train = torch.stack(torch.meshgrid(data_gen(space=[torch.Tensor([-1.,1.])], n_samples=100, sampler=sampler).squeeze(), torch.Tensor([0.]), indexing='ij')).reshape(2, -1).T.to(device)
         
-
         y_bc1 = torch.zeros(len(bc1))
         y_bc2 = torch.zeros(len(bc2))
         y_bc_train = torch.cat([y_bc1, y_bc2]).unsqueeze(1).to(device)
