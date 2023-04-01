@@ -1,35 +1,60 @@
 import os
-from torch.utils.data import Dataset, DataLoader, ConcatDataset
+import pandas as pd
 import wandb
-import lightning.pytorch as lt
+from torch.optim import LBFGS, Adam
 from models import *
 
-class BurgersNet(lt.LightningModule):
-    def __init__(self, model):
-        self.model=model
+class BurgersNet():
+    def __init__(self, model, device):
+        self.device = device
+        self.model=model.to(self.device)
     
-    def configure_optimizers(self):
-        if condition:
-            return torch.optim.Adam(self.model.parameters())
-        else:
-            return torch.optim.LBFGS(self.model.parameters()) 
-
-    def training(self, X_int_train, X_bc_train, X_ic_train, y_bc_train,y_ic_train):
-        res = pd.DataFrame(None, columns = ["Training Loss"], dtypes=float)
-        optimizer = optim.LBFGS(model.parameters(), lr=0.003)
-        Use_Adam_optim_FirstTime=True
-        Use_LBFGS_optim=True
+    def training(self,
+                 X_int_train,
+                 X_bc_train,
+                 X_ic_train,
+                 y_bc_train,
+                 y_ic_train,
+                 adam_epochs,
+                 lbfgs_epochs
+        ):
+        res = pd.DataFrame(None, columns = ["Training Loss"], dtype=float)
+        optimizer = Adam(self.model.parameters())
         self.model.train()
-        for e in range(epochs):
-            self.adam.zero_grad()
+        for e in range(adam_epochs):
+            optimizer.zero_grad()
             u = self.model(X_int_train)
-            loss_pde = BurgersPDE(X_int_train, u, torch.nn.MSELoss)
+            loss_pde = BurgersPDE(X_int_train, u, self.device)
             y_bc_pred = self.model(X_bc_train)
-            loss_bc = torch.nn.MSELmseloss(y_bc_pred, y_bc_train)
+            loss_bc = torch.nn.MSELoss()(y_bc_pred, y_bc_train)
             y_ic_pred = self.model(X_ic_train)
-            loss_ic = torch.nn.MSELoss(y_ic_pred, y_ic_train)
+            loss_ic = torch.nn.MSELoss()(y_ic_pred, y_ic_train)
             loss = loss_pde + loss_bc + loss_ic
+            loss.backward()
+            res.loc[e, "Training Loss"] = loss.item()
+            wandb.log({"loss":loss})
+            optimizer.step()
+        print(optimizer.state_dict())
+        optimizer = LBFGS(self.model.parameters(), lr = 0.01)
+        for e in range(lbfgs_epochs):
+          def closure():
+            if torch.is_grad_enabled():
+              optimizer.zero_grad()
+            u = self.model(X_int_train)
+            loss_pde = BurgersPDE(X_int_train, u, self.device)
+            y_bc_pred = self.model(X_bc_train)
+            loss_bc = torch.nn.MSELoss()(y_bc_pred, y_bc_train)
+            y_ic_pred = self.model(X_ic_train)
+            loss_ic = torch.nn.MSELoss()(y_ic_pred, y_ic_train)
+            loss = loss_pde + loss_bc + loss_ic
+            if loss.requires_grad:
+                loss.backward()
             return loss
+          wandb.log({"loss":loss})
+          res.loc[e + adam_epochs, "Training Loss"] = loss.item()
+          optimizer.step(closure=closure)
+        print(optimizer.state_dict())
+
 
 
 
@@ -39,7 +64,8 @@ def main(pde:str,
          gamma_2:float,
          hidden_units_1:int,
          hidden_units_2:int,
-         epochs:int,
+         adam_epochs:int,
+         lbfgs_epochs:int,
          directory,
          sampler=None,
          gamma_3 = None,
@@ -71,7 +97,7 @@ def main(pde:str,
     """ 
     print(f"PDE:Burgers")
     if (not gamma_3):
-        print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, h_1={hidden_units_1}, h_2={hidden_units_2}, epochs={epochs}")
+        print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, h_1={hidden_units_1}, h_2={hidden_units_2}, epochs={adam_epochs+lbfgs_epochs}")
     else:
         print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, g_3={gamma_3}, h_1={hidden_units_1}, h_2={hidden_units_2}, h_3={hidden_units_3}, epochs = {epochs}")
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -100,13 +126,13 @@ def main(pde:str,
                          device=device
               )
     print(f"Model: {net.model}")
-    wandb_logger = WandbLogger()
-    wandb.watch(net.model, log_freq=1000)
+    wandb.init(project="master_thesis")
+    
     if not sampler:
         h = 0.01
         x = torch.arange(-1, 1 + h, h)
         t = torch.arange(0, 1 + h, h)
-        X_int_train = torch.stack(torch.meshgrid(x[1:-2], t[1:-2], indexing='ij')).reshape(2, -1).T
+        X_int_train = torch.stack(torch.meshgrid(x[1:-2], t[1:-2], indexing='ij')).reshape(2, -1).T.to(device)
         X_int_train.requires_grad = True
         bc1 = torch.stack(torch.meshgrid(x[0],
                                              t,
@@ -114,25 +140,26 @@ def main(pde:str,
         bc2 = torch.stack(torch.meshgrid(x[-1],
                                              t,
                                              indexing='ij')).reshape(2, -1).T
-        X_bc_train = torch.cat([bc1, bc2])
+        X_bc_train = torch.cat([bc1, bc2]).to(device)
         y_bc1 = torch.zeros(len(bc1))
         y_bc2 = torch.zeros(len(bc2))
-        y_bc_train = torch.cat([y_bc1, y_bc2]).unsqueeze(1)
-        ic = torch.stack(torch.meshgrid(x,
-                                        t[0],
-                                        indexing='ij')).reshape(2, -1).T         
-        y_ic_train = -torch.sin(np.pi * ic[:, 0]).unsqueeze(1)
+        y_bc_train = torch.cat([y_bc1, y_bc2]).unsqueeze(1).to(device)
+        X_ic_train = torch.stack(torch.meshgrid(x,
+                                                t[0],
+                                                indexing='ij')).reshape(2, -1).T         
+        y_ic_train = -torch.sin(np.pi * X_ic_train[:, 0]).unsqueeze(1).to(device)
         results = net.training(X_int_train=X_int_train,
                                X_bc_train=X_bc_train,
-                               X_ic_train=ic,
+                               X_ic_train=X_ic_train,
                                y_bc_train=y_bc_train,
-                               y_ic_train=y_ic,
-                               epochs=epochs
+                               y_ic_train=y_ic_train,
+                               adam_epochs=adam_epochs,
+                               lbfgs_epochs=lbfgs_epochs
                   )
 
         if not gamma_3:
             file_name = generate_file_name(pde=pde,
-                                           epochs=epochs,
+                                           epochs=adam_epochs + lbfgs_epochs,
                                            hidden_units_1=hidden_units_1,
                                            hidden_units_2=hidden_units_2,
                                            gamma_1=gamma_1,
@@ -142,7 +169,7 @@ def main(pde:str,
             results_directory = os.path.join(directory, place)
         else:
             file_name = generate_file_name(pde=pde,
-                                           epochs=epochs,
+                                           epochs=adam_epochs + lbfgs_epochs,
                                            hidden_units_1=hidden_units_1,
                                            hidden_units_2=hidden_units_2,
                                            gamma_1=gamma_1,
@@ -155,9 +182,8 @@ def main(pde:str,
         save_results(results=results,
                  directory=results_directory,
                  file_name=file_name
-    )
-        path = os.path.join(results_directory, file_name) + '_model.pth'
-        torch.save(net.model.state_dict(), path)
+        )
+        wandb.log_artifact(net.model)
 
     else:
         full_space = [torch.Tensor([-1., 0.]), torch.Tensor([1., 1.])]
@@ -176,20 +202,17 @@ def main(pde:str,
         X_bc_train = torch.cat([bc1, bc2])
         y_bc1 = torch.zeros(len(bc1))
         y_bc2 = torch.zeros(len(bc2))
-        y_bc_train = torch.cat([y_bc1, y_bc2]).unsqueeze(1)
-        X_ic_train = torch.stack(torch.meshgrid(data_gen(space=[torch.Tensor([-1.,1.])], n_samples=100, sampler=sampler).squeeze(), torch.Tensor([0.]), indexing='ij')).reshape(2, -1).T.to(device)
-        
-        y_bc1 = torch.zeros(len(bc1))
-        y_bc2 = torch.zeros(len(bc2))
         y_bc_train = torch.cat([y_bc1, y_bc2]).unsqueeze(1).to(device)
+        X_ic_train = torch.stack(torch.meshgrid(data_gen(space=[torch.Tensor([-1.,1.])], n_samples=100, sampler=sampler).squeeze(), torch.Tensor([0.]), indexing='ij')).reshape(2, -1).T.to(device)
         y_ic_train = -torch.sin(np.pi*X_ic_train[:, 0]).unsqueeze(1).to(device)
 
-        results = net.training(X_int_train=X_int_train, X_bc_train=X_bc_train, X_ic_train=X_ic_train, y_bc_train=y_bc_train,y_ic_train=y_ic_train,epochs=epochs)
+        results = net.training(X_int_train=X_int_train,
+                                    X_bc_train=X_bc_train, X_ic_train=X_ic_train, y_bc_train=y_bc_train,y_ic_train=y_ic_train,epochs=epochs)
 
     # Save accuracy results
         if not gamma_3:
             file_name = generate_file_name(pde=pde,
-                                           epochs=epochs,
+                                           epochs=adam_epochs + lbfgs_epochs,
                                            hidden_units_1=hidden_units_1,
                                            hidden_units_2=hidden_units_2,
                                            gamma_1=gamma_1,
@@ -199,7 +222,7 @@ def main(pde:str,
             results_directory = os.path.join(directory, place)
         else:
             file_name = generate_file_name(pde=pde,
-                                           epochs=epochs,
+                                           epochs=adam_epochs + lbfgs_epochs,
                                            hidden_units_1=hidden_units_1,
                                            hidden_units_2=hidden_units_2,
                                            gamma_1=gamma_1,
@@ -213,20 +236,20 @@ def main(pde:str,
                      directory=results_directory,
                      file_name=file_name
         )
-        path = os.path.join(results_directory, file_name) + '_model.pth'
-        torch.save(net.model.state_dict(), path)
+        wandb.log_artifact(net.model)
 
     return
 
 if __name__ == '__main__':
     pde='Burgers'
-    gamma_1_list = [0.5, 0.7, 1.0]
-    gamma_2_list = [0.5, 0.7, 1.0]
+    gamma_1_list = [0.5]
+    gamma_2_list = [0.5]
     #gamma_3_list = [0.5, 0.7, 1.0]
     hidden_units_1=100
     hidden_units_2=100
     #hidden_units_3=100
-    epochs = 25000
+    adam_epochs = 150
+    lbfgs_epochs=10
     sampler_list = ['random','LHS', 'Halton', 'Sobol']
     directory=os.getcwd()
     for gamma_1 in gamma_1_list:
@@ -235,6 +258,7 @@ if __name__ == '__main__':
                      gamma_2=gamma_2,
                      hidden_units_1=hidden_units_1,
                      hidden_units_2=hidden_units_2,
-                     epochs=epochs,
+                     adam_epochs=adam_epochs,
+                     lbfgs_epochs=lbfgs_epochs,
                      directory=directory
                 )
