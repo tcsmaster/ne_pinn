@@ -101,7 +101,6 @@ def BurgersPDE(x, u, device):
                                 outputs=u,
                                 grad_outputs=torch.ones_like(u).to(device),
                                 create_graph=True,
-                                allow_unused=True
             )[0]
     du_dt = du_dX[:,1]
     du_dx = du_dX[:,0]
@@ -109,7 +108,6 @@ def BurgersPDE(x, u, device):
                                  outputs=du_dx,
                                  grad_outputs=torch.ones_like(du_dx).to(device),
                                  retain_graph=True,
-                                 allow_unused=True
              )[0][:, 0]
     loss = MSELoss()(du_dt + du_dx*u.squeeze(),-0.01/pi*du_dxx)
     return loss

@@ -32,14 +32,14 @@ class BurgersNet():
             loss = loss_pde + loss_bc + loss_ic
             loss.backward()
             res.loc[e, "Training Loss"] = loss.item()
-            wandb.log({"loss":loss})
+            wandb.log({"loss":loss.item()})
             optimizer.step()
-        print(optimizer.state_dict())
-        optimizer = LBFGS(self.model.parameters(), lr = 0.01)
+
+        optimizer = LBFGS(self.model.parameters(), lr=0.01)
         for e in range(lbfgs_epochs):
           def closure():
             if torch.is_grad_enabled():
-              optimizer.zero_grad()
+              optimizer.zero_grad(set_to_none=True)
             u = self.model(X_int_train)
             loss_pde = BurgersPDE(X_int_train, u, self.device)
             y_bc_pred = self.model(X_bc_train)
@@ -50,10 +50,20 @@ class BurgersNet():
             if loss.requires_grad:
                 loss.backward()
             return loss
-          wandb.log({"loss":loss})
-          res.loc[e + adam_epochs, "Training Loss"] = loss.item()
           optimizer.step(closure=closure)
-        print(optimizer.state_dict())
+
+          u = self.model(X_int_train)
+          loss_pde = BurgersPDE(X_int_train, u, self.device)
+          y_bc_pred = self.model(X_bc_train)
+          loss_bc = torch.nn.MSELoss()(y_bc_pred, y_bc_train)
+          y_ic_pred = self.model(X_ic_train)
+          loss_ic = torch.nn.MSELoss()(y_ic_pred, y_ic_train)
+          loss = loss_pde + loss_bc + loss_ic
+          print(loss.item())
+          wandb.log({"loss":loss.item()})
+          res.loc[e + adam_epochs, "Training Loss"] = loss.item()
+        return res
+
 
 
 
@@ -127,7 +137,7 @@ def main(pde:str,
               )
     print(f"Model: {net.model}")
     wandb.init(project="master_thesis")
-    
+    art = wandb.Artifact("gamma_0.5", type="model")
     if not sampler:
         h = 0.01
         x = torch.arange(-1, 1 + h, h)
@@ -207,7 +217,7 @@ def main(pde:str,
         y_ic_train = -torch.sin(np.pi*X_ic_train[:, 0]).unsqueeze(1).to(device)
 
         results = net.training(X_int_train=X_int_train,
-                                    X_bc_train=X_bc_train, X_ic_train=X_ic_train, y_bc_train=y_bc_train,y_ic_train=y_ic_train,epochs=epochs)
+                                    X_bc_train=X_bc_train, X_ic_train=X_ic_train, y_bc_train=y_bc_train,y_ic_train=y_ic_train,adam_epochs=adam_epochs, lbfgs_epochs=lbfgs_epochs)
 
     # Save accuracy results
         if not gamma_3:
@@ -245,20 +255,22 @@ if __name__ == '__main__':
     gamma_1_list = [0.5]
     gamma_2_list = [0.5]
     #gamma_3_list = [0.5, 0.7, 1.0]
-    hidden_units_1=100
-    hidden_units_2=100
+    hidden_units_1=5
+    hidden_units_2=5
     #hidden_units_3=100
-    adam_epochs = 150
-    lbfgs_epochs=10
-    sampler_list = ['random','LHS', 'Halton', 'Sobol']
+    adam_epochs = 15
+    lbfgs_epochs=100
+    sampler_list = ['random']
     directory=os.getcwd()
     for gamma_1 in gamma_1_list:
         for gamma_2 in gamma_2_list:
+            for sampler in sampler_list:
                 main(pde=pde,gamma_1=gamma_1,
                      gamma_2=gamma_2,
                      hidden_units_1=hidden_units_1,
                      hidden_units_2=hidden_units_2,
                      adam_epochs=adam_epochs,
                      lbfgs_epochs=lbfgs_epochs,
-                     directory=directory
+                     directory=directory,
+                     sampler=sampler
                 )
