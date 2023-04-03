@@ -253,20 +253,21 @@ def main(pde:str,
 
 if __name__ == '__main__':
     pde='Burgers'
-    gamma_1_list = [0.5, 0.7, 1.0]
-    gamma_2_list = [0.5, 0.7, 1.0]
-    gamma_3_list = [0.5, 0.7, 1.0]
+    gamma_1_list = [0.5]
+    gamma_2_list = [0.5]
+    gamma_3_list = [0.5]
     hidden_units_1=20
     hidden_units_2=20
     hidden_units_3=20
     adam_epochs = 20000
     lbfgs_epochs=0
-    sampler_list = ['random']
+    sampler_list = ['random', 'LHS', 'Sobol', 'Halton']
     directory=os.getcwd()
     for gamma_1 in gamma_1_list:
         for gamma_2 in gamma_2_list:
             for gamma_3 in gamma_3_list:
-                main(pde=pde,gamma_1=gamma_1,
+                for sampler in sampler_list:
+                    main(pde=pde,gamma_1=gamma_1,
                      gamma_2=gamma_2,
                      gamma_3 = gamma_3,
                      hidden_units_1=hidden_units_1,
@@ -275,4 +276,5 @@ if __name__ == '__main__':
                      adam_epochs=adam_epochs,
                      lbfgs_epochs=lbfgs_epochs,
                      directory=directory,
+                     sampler=sampler
                 )
