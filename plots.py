@@ -293,9 +293,10 @@ def run_3layer_accuracy_plots(pde,
         ax = fig.axes[0]
         plt.ylabel(acc)
         ax.set_title(f'{acc} for gamma_1={gamma_1} for {pde} pde')
-        plt.legend(legend_labels, title='(gamma_2, gamma_3)', loc='lower center', bbox_to_anchor=(0.5, -0.2), ncol=3)
+        plt.legend(legend_labels, title='(gamma_2, gamma_3)', loc='best', ncol=3)
         plt.xlabel('Number of Epochs')
         plt.yscale('log')
+        plt.grid()
     
         
         # Generate file name
@@ -316,18 +317,18 @@ def run_3layer_accuracy_plots(pde,
 
             for count_2, gamma_3 in enumerate(gamma_3_list):
                 legend_labels += [(gamma_1, gamma_3)]
-                plt.plot(
-                    data[(gamma_1, gamma_2, gamma_3)],
-                    color=colors[count_1],
-                    linestyle=line_styles[count_2])
+                plt.plot(data[(gamma_1, gamma_2, gamma_3)],
+                         color=colors[count_1],
+                         linestyle=line_styles[count_2])
 
         # Set title, label legend and x- and y-axes
         ax = fig.axes[0]
         plt.ylabel(acc)
         ax.set_title(f'{acc} for gamma_2={gamma_2} for {pde} pde')
-        plt.legend(legend_labels, title='(gamma_1, gamma_3)', loc='lower center', bbox_to_anchor=(0.5, -0.2), ncol=3)
+        plt.legend(legend_labels, title='(gamma_1, gamma_3)', loc='best', ncol=3)
         plt.xlabel('Number of Epochs')
         plt.yscale('log')
+        plt.grid()
     
         
         # Generate file name
@@ -356,9 +357,10 @@ def run_3layer_accuracy_plots(pde,
         ax = fig.axes[0]
         plt.ylabel(acc)
         ax.set_title(f'{acc} for gamma_3={gamma_3} for {pde} pde')
-        plt.legend(legend_labels, title='(gamma_1, gamma_2)', loc='lower center', bbox_to_anchor=(0.5, -0.2), ncol=3)
+        plt.legend(legend_labels, title='(gamma_1, gamma_2)', loc='best', ncol=3)
         plt.xlabel('Number of Epochs')
         plt.yscale('log')
+        plt.grid()
     
         
         # Generate f    ile name
