@@ -2,9 +2,7 @@
 import torch.nn as nn
 #import numpy as np
 import pandas as pd
-from utils import *
-from pdes import *
-import wandb
+
 
 
 class MLP2(nn.Module):

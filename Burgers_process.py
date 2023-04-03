@@ -1,8 +1,9 @@
 import os
 import pandas as pd
-import wandb
 from torch.optim import LBFGS, Adam
 from models import *
+from pdes import BurgersPDE
+from utils import *
 
 class BurgersNet():
     def __init__(self, model, device):
@@ -19,7 +20,7 @@ class BurgersNet():
                  lbfgs_epochs
         ):
         res = pd.DataFrame(None, columns = ["Training Loss"], dtype=float)
-        optimizer = Adam(self.model.parameters())
+        optimizer = Adam(self.model.parameters(), amsgrad=True)
         self.model.train()
         for e in range(adam_epochs):
             optimizer.zero_grad()
@@ -32,9 +33,8 @@ class BurgersNet():
             loss = loss_pde + loss_bc + loss_ic
             loss.backward()
             res.loc[e, "Training Loss"] = loss.item()
-            wandb.log({"loss":loss.item()})
             optimizer.step()
-
+        """
         optimizer = LBFGS(self.model.parameters(), lr=0.01)
         for e in range(lbfgs_epochs):
           def closure():
@@ -62,6 +62,7 @@ class BurgersNet():
           print(loss.item())
           wandb.log({"loss":loss.item()})
           res.loc[e + adam_epochs, "Training Loss"] = loss.item()
+          """
         return res
 
 
@@ -107,9 +108,9 @@ def main(pde:str,
     """ 
     print(f"PDE:Burgers")
     if (not gamma_3):
-        print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, h_1={hidden_units_1}, h_2={hidden_units_2}, epochs={adam_epochs+lbfgs_epochs}")
+        print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, h_1={hidden_units_1}, h_2={hidden_units_2}, epochs={adam_epochs}")
     else:
-        print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, g_3={gamma_3}, h_1={hidden_units_1}, h_2={hidden_units_2}, h_3={hidden_units_3}, epochs = {epochs}")
+        print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, g_3={gamma_3}, h_1={hidden_units_1}, h_2={hidden_units_2}, h_3={hidden_units_3}, epochs = {adam_epochs}")
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     if (not gamma_3):
         net = BurgersNet(MLP2(num_input=2,
@@ -136,10 +137,9 @@ def main(pde:str,
                          device=device
               )
     print(f"Model: {net.model}")
-    wandb.init(project="master_thesis")
-    art = wandb.Artifact("gamma_0.5", type="model")
+
     if not sampler:
-        h = 0.01
+        h = 0.05
         x = torch.arange(-1, 1 + h, h)
         t = torch.arange(0, 1 + h, h)
         X_int_train = torch.stack(torch.meshgrid(x[1:-2], t[1:-2], indexing='ij')).reshape(2, -1).T.to(device)
@@ -193,8 +193,8 @@ def main(pde:str,
                  directory=results_directory,
                  file_name=file_name
         )
-        wandb.log_artifact(net.model)
-
+        path = results_directory + file_name + "_model.pth"
+        torch.save(net.model.state_dict(), path)
     else:
         full_space = [torch.Tensor([-1., 0.]), torch.Tensor([1., 1.])]
         X_int_train = data_gen(space=full_space, n_samples=2000, sampler=sampler).to(device)
@@ -217,12 +217,12 @@ def main(pde:str,
         y_ic_train = -torch.sin(np.pi*X_ic_train[:, 0]).unsqueeze(1).to(device)
 
         results = net.training(X_int_train=X_int_train,
-                                    X_bc_train=X_bc_train, X_ic_train=X_ic_train, y_bc_train=y_bc_train,y_ic_train=y_ic_train,adam_epochs=adam_epochs, lbfgs_epochs=lbfgs_epochs)
+                               X_bc_train=X_bc_train, X_ic_train=X_ic_train, y_bc_train=y_bc_train,y_ic_train=y_ic_train,adam_epochs=adam_epochs, lbfgs_epochs=lbfgs_epochs)
 
     # Save accuracy results
         if not gamma_3:
             file_name = generate_file_name(pde=pde,
-                                           epochs=adam_epochs + lbfgs_epochs,
+                                           epochs=adam_epochs,
                                            hidden_units_1=hidden_units_1,
                                            hidden_units_2=hidden_units_2,
                                            gamma_1=gamma_1,
@@ -232,7 +232,7 @@ def main(pde:str,
             results_directory = os.path.join(directory, place)
         else:
             file_name = generate_file_name(pde=pde,
-                                           epochs=adam_epochs + lbfgs_epochs,
+                                           epochs=adam_epochs,
                                            hidden_units_1=hidden_units_1,
                                            hidden_units_2=hidden_units_2,
                                            gamma_1=gamma_1,
@@ -246,31 +246,33 @@ def main(pde:str,
                      directory=results_directory,
                      file_name=file_name
         )
-        wandb.log_artifact(net.model)
+        path = results_directory + file_name + "_model.pth"
+        torch.save(net.model.state_dict(), path)
 
     return
 
 if __name__ == '__main__':
     pde='Burgers'
-    gamma_1_list = [0.5]
-    gamma_2_list = [0.5]
-    #gamma_3_list = [0.5, 0.7, 1.0]
-    hidden_units_1=5
-    hidden_units_2=5
-    #hidden_units_3=100
-    adam_epochs = 15
-    lbfgs_epochs=100
+    gamma_1_list = [0.5, 0.7, 1.0]
+    gamma_2_list = [0.5, 0.7, 1.0]
+    gamma_3_list = [0.5, 0.7, 1.0]
+    hidden_units_1=20
+    hidden_units_2=20
+    hidden_units_3=20
+    adam_epochs = 20000
+    lbfgs_epochs=0
     sampler_list = ['random']
     directory=os.getcwd()
     for gamma_1 in gamma_1_list:
         for gamma_2 in gamma_2_list:
-            for sampler in sampler_list:
+            for gamma_3 in gamma_3_list:
                 main(pde=pde,gamma_1=gamma_1,
                      gamma_2=gamma_2,
+                     gamma_3 = gamma_3,
                      hidden_units_1=hidden_units_1,
                      hidden_units_2=hidden_units_2,
+                     hidden_units_3 = hidden_units_3,
                      adam_epochs=adam_epochs,
                      lbfgs_epochs=lbfgs_epochs,
                      directory=directory,
-                     sampler=sampler
                 )
