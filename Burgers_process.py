@@ -20,18 +20,19 @@ class BurgersNet():
                  lbfgs_epochs
         ):
         res = pd.DataFrame(None, columns = ["Training Loss"], dtype=float)
-        optimizer = Adam(self.model.parameters(), amsgrad=True)
+        optimizer = Adam(self.model.parameters())
         self.model.train()
         for e in range(adam_epochs):
             optimizer.zero_grad()
             u = self.model(X_int_train)
-            loss_pde = BurgersPDE(X_int_train, u, self.device)
-            y_bc_pred = self.model(X_bc_train)
-            loss_bc = torch.nn.MSELoss()(y_bc_pred, y_bc_train)
-            y_ic_pred = self.model(X_ic_train)
-            loss_ic = torch.nn.MSELoss()(y_ic_pred, y_ic_train)
-            loss = loss_pde + loss_bc + loss_ic
-            loss.backward()
+            hard_u =  X_int_train[:, 0]* (torch.ones_like(u) - torch.square(X_int_train[:, 1]))  -torch.sin(pi*X_int_train[:, 1])
+            #loss_pde = BurgersPDE(X_int_train, hard_u, self.device)
+            #y_bc_pred = self.model(X_bc_train)
+            #loss_bc = torch.nn.MSELoss()(y_bc_pred, y_bc_train)
+            #y_ic_pred = self.model(X_ic_train)
+            #loss_ic = torch.nn.MSELoss()(y_ic_pred, y_ic_train)
+            #loss = loss_pde + loss_bc + loss_ic
+            #loss.backward()
             res.loc[e, "Training Loss"] = loss.item()
             optimizer.step()
         """
@@ -197,7 +198,9 @@ def main(pde:str,
         torch.save(net.model.state_dict(), path)
     else:
         full_space = [torch.Tensor([-1., 0.]), torch.Tensor([1., 1.])]
-        X_int_train = data_gen(space=full_space, n_samples=2000, sampler=sampler).to(device)
+        X_int_train = data_gen(space=full_space,
+                               n_samples=8000,
+                               sampler=sampler).to(device)
         X_int_train.requires_grad=True
         bc1 = torch.stack(torch.meshgrid(torch.Tensor([-1.]),
                                          data_gen(space=[torch.Tensor([0., 1.])],
@@ -217,7 +220,12 @@ def main(pde:str,
         y_ic_train = -torch.sin(np.pi*X_ic_train[:, 0]).unsqueeze(1).to(device)
 
         results = net.training(X_int_train=X_int_train,
-                               X_bc_train=X_bc_train, X_ic_train=X_ic_train, y_bc_train=y_bc_train,y_ic_train=y_ic_train,adam_epochs=adam_epochs, lbfgs_epochs=lbfgs_epochs)
+                               X_bc_train=X_bc_train,
+                               X_ic_train=X_ic_train,
+                               y_bc_train=y_bc_train,
+                               y_ic_train=y_ic_train,
+                               adam_epochs=adam_epochs,
+                               lbfgs_epochs=lbfgs_epochs)
 
     # Save accuracy results
         if not gamma_3:
@@ -256,23 +264,21 @@ if __name__ == '__main__':
     gamma_1_list = [0.5]
     gamma_2_list = [0.5]
     gamma_3_list = [0.5]
-    hidden_units_1=20
-    hidden_units_2=20
-    hidden_units_3=20
+    hidden_units_1=100
+    hidden_units_2=100
+    hidden_units_3=100
     adam_epochs = 20000
     lbfgs_epochs=0
     sampler_list = ['random', 'LHS', 'Sobol', 'Halton']
     directory=os.getcwd()
     for gamma_1 in gamma_1_list:
         for gamma_2 in gamma_2_list:
-            for gamma_3 in gamma_3_list:
-                for sampler in sampler_list:
-                    main(pde=pde,gamma_1=gamma_1,
+            for sampler in sampler_list:
+                main(pde=pde,
+                     gamma_1=gamma_1,
                      gamma_2=gamma_2,
-                     gamma_3 = gamma_3,
                      hidden_units_1=hidden_units_1,
                      hidden_units_2=hidden_units_2,
-                     hidden_units_3 = hidden_units_3,
                      adam_epochs=adam_epochs,
                      lbfgs_epochs=lbfgs_epochs,
                      directory=directory,

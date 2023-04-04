@@ -109,10 +109,18 @@ def BurgersPDE(x, u, device):
                                  grad_outputs=torch.ones_like(du_dx).to(device),
                                  retain_graph=True,
              )[0][:, 0]
-    loss = MSELoss()(du_dt + du_dx*u.squeeze(),-0.01/pi*du_dxx)
+    loss = MSELoss()(du_dt + du_dx*u.squeeze(),0.01/pi*du_dxx)
     return loss
 
-def PoissonPDE(x, u,  loss):
-    du_dx = torch.autograd.grad(inputs=x, outputs=u, grad_outputs=torch.ones_like(u),retain_graph = True, create_graph=True)[0]
-    du_dxx = torch.autograd.grad(inputs=x, outputs=du_dx, grad_outputs=torch.ones_like(du_dx), retain_graph=True)[0][:, 0]
-    loss_pde = loss(-du_dxx, (pi**2)*torch.sin(pi*x.squeeze()))
+def PoissonPDE(x, u, device):
+    du_dx = torch.autograd.grad(inputs=x,
+                                outputs=u,
+                                grad_outputs=torch.ones_like(u).to(device),
+                                create_graph=True
+            )[0]
+    du_dxx = torch.autograd.grad(inputs=x,
+                                 outputs=du_dx,
+                                 grad_outputs=torch.ones_like(du_dx).to(device),
+                                 retain_graph=True
+             )[0][:, 0]
+    loss_pde = MSELoss()(-du_dxx, (pi**2)*torch.sin(pi*x.squeeze()))
