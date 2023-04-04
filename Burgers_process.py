@@ -1,10 +1,13 @@
 import os
+from numpy import pi
 import pandas as pd
 from torch.optim import LBFGS, Adam
 from models import *
 from pdes import BurgersPDE
 from utils import *
 
+def output_transform(x, y):
+    return x[:, 0:1]* (1 - torch.square(x[:, 1:2]))*y - torch.sin(pi*x[:, 1:2]) 
 class BurgersNet():
     def __init__(self, model, device):
         self.device = device
@@ -25,14 +28,14 @@ class BurgersNet():
         for e in range(adam_epochs):
             optimizer.zero_grad()
             u = self.model(X_int_train)
-            hard_u =  X_int_train[:, 0]* (torch.ones_like(u) - torch.square(X_int_train[:, 1]))  -torch.sin(pi*X_int_train[:, 1])
-            #loss_pde = BurgersPDE(X_int_train, hard_u, self.device)
-            #y_bc_pred = self.model(X_bc_train)
-            #loss_bc = torch.nn.MSELoss()(y_bc_pred, y_bc_train)
-            #y_ic_pred = self.model(X_ic_train)
-            #loss_ic = torch.nn.MSELoss()(y_ic_pred, y_ic_train)
-            #loss = loss_pde + loss_bc + loss_ic
-            #loss.backward()
+            loss_pde = BurgersPDE(X_int_train, u, self.device)
+            # y_bc_pred = self.model(X_bc_train)
+            # loss_bc = torch.nn.MSELoss()(y_bc_pred, y_bc_train)
+            # y_ic_pred = self.model(X_ic_train)
+            # loss_ic = torch.nn.MSELoss()(y_ic_pred, y_ic_train)
+            # loss = loss_pde + loss_bc + loss_ic
+            loss = torch.nn.MSELoss()(u, torch.zeros_like(u))
+            loss.backward()
             res.loc[e, "Training Loss"] = loss.item()
             optimizer.step()
         """
@@ -267,7 +270,7 @@ if __name__ == '__main__':
     hidden_units_1=100
     hidden_units_2=100
     hidden_units_3=100
-    adam_epochs = 20000
+    adam_epochs = 2
     lbfgs_epochs=0
     sampler_list = ['random', 'LHS', 'Sobol', 'Halton']
     directory=os.getcwd()
