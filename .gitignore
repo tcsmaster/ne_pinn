@@ -65,7 +65,9 @@ coverage.xml
 *.mo
 *.pot
 
-wandb/
+results/
+
+figures/
 
 # Django stuff:
 *.log
