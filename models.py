@@ -1,9 +1,8 @@
-#import torch
+import torch
 import torch.nn as nn
 #import numpy as np
 import pandas as pd
-from utils import *
-from pdes import *
+
 
 
 class MLP2(nn.Module):
@@ -21,7 +20,7 @@ class MLP2(nn.Module):
         the mean-field scaling parameter for the second hidden layer
     """
     
-    def __init__(self, num_input, num_output, hidden_units_1, hidden_units_2, gamma_1, gamma_2, sampler = None):
+    def __init__(self, num_input, num_output, hidden_units_1, hidden_units_2, gamma_1, gamma_2, sampler = None, output_transform = None):
         super(MLP2, self).__init__()
         
         # Parameters
@@ -32,6 +31,7 @@ class MLP2(nn.Module):
         self.gamma_1 = gamma_1
         self.gamma_2 = gamma_2
         self.sampler = sampler
+        self.output_transform = output_transform
         # Layers
         self.fc1 = nn.Linear(self.num_input, self.hidden_units_1)
         nn.init.normal_(self.fc1.weight, mean=0.0, std=1.0)
@@ -41,17 +41,22 @@ class MLP2(nn.Module):
         nn.init.uniform_(self.fc3.weight, a=0.0, b=1.0)
     
     def forward(self, x):
+        inputs=x
         if not self.sampler:
             scaling_1 = self.hidden_units_1 ** (-self.gamma_1)
             x = scaling_1 * torch.tanh(self.fc1(x))
             scaling_2 = self.hidden_units_2**(-self.gamma_2)
             x = scaling_2 * torch.tanh(self.fc2(x))
             x = self.fc3(x)
+            if self.output_transform:
+                x = self.output_transform(inputs, x)
             return x
         else:
             x = torch.tanh(self.fc1(x))
             x = torch.tanh(self.fc2(x))
             x = self.fc3(x)
+            if self.output_transform:
+                x = self.output_transform(inputs, x)
             return x
     
 class MLP3(nn.Module):
@@ -73,7 +78,7 @@ class MLP3(nn.Module):
         the mean-field scaling parameter for the third hidden layer
     """
     
-    def __init__(self, num_input, num_output, hidden_units_1, hidden_units_2, hidden_units_3, gamma_1, gamma_2, gamma_3, sampler = None):
+    def __init__(self, num_input, num_output, hidden_units_1, hidden_units_2, hidden_units_3, gamma_1, gamma_2, gamma_3, sampler = None, output_transform=None):
         super(MLP3, self).__init__()
         
         # Parameters
@@ -86,6 +91,7 @@ class MLP3(nn.Module):
         self.gamma_2 = gamma_2
         self.gamma_3 = gamma_3
         self.sampler = sampler
+        self.output_transform = output_transform
         
         # Layers
         self.fc1 = nn.Linear(self.num_input, self.hidden_units_1)
@@ -98,6 +104,7 @@ class MLP3(nn.Module):
         nn.init.uniform_(self.fc4.weight, a=0.0, b=1.0)
     
     def forward(self, x):
+        inputs=x
         if not self.sampler:
             scaling_1 = self.hidden_units_1 ** (-self.gamma_1)
             x = scaling_1 * torch.tanh(self.fc1(x))
@@ -106,6 +113,8 @@ class MLP3(nn.Module):
             scaling_3 = self.hidden_units_3**(-self.gamma_3)
             x = scaling_3 * torch.tanh(self.fc3(x))
             x = self.fc4(x)
+            if self.output_transform:
+                x = self.output_transform(inputs, x)
             return x
         
         else:
@@ -113,6 +122,8 @@ class MLP3(nn.Module):
             x = torch.tanh(self.fc2(x))
             x = torch.tanh(self.fc3(x))
             x = self.fc4(x)
+            if self.output_transform:
+                x = self.output_transform(inputs, x)
             return x
     
 class PoissonNet:
@@ -190,90 +201,4 @@ class ReadyNet:
                 res.loc[e, 'Test Loss'] = test_loss.item()
         return res
 
-class NSNet:
-    def __init__(self, model, device):
-        self.device = device
-        self.model = model.to(self.device)
-        self.mseloss = torch.nn.MSELoss()
-        self.adam = torch.optim.Adam(self.model.parameters())
-        self.lbfgs = torch.optim.LBFGS(self.model.parameters())
-    
-    def training(self, X_int_train,X_bic_train, y_bic_train, adam_epochs,lbfgs_epochs):
-        res = pd.DataFrame(None, columns=['Training Loss'], dtype=float)
-        self.model.train()
-        for e in range(adam_epochs):
-            self.adam.zero_grad()
-
-            y_bic_pred = self.model(X_bic_train)
-            loss_bic = self.mseloss(y_bic_pred, y_bic_train)
-
-            u = self.model(X_int_train)
-            loss_pde = NSPDE(X_int_train, u, self.device, self.mseloss)
-            
-            loss = loss_pde + loss_bic
-            res.loc[e, 'Training Loss'] = loss.item()
-            loss.backward()
-            self.adam.step()
-        print("We are done with Adam, moving into L-BFGS!")
-        for e in range(lbfgs_epochs):
-            def closure():
-                if torch.is_grad_enabled():
-                    self.lbfgs.zero_grad()
-                u = self.model(X_int_train)
-                loss_pde = NSPDE(X_int_train, u, self.device, self.mseloss)
-                y_bic_pred = self.model(X_bic_train)
-                loss_bic = self.mseloss(y_bic_pred, y_bic_train)
-                loss = loss_pde + loss_bic
-                res.loc[adam_epochs + e +1, 'Training Loss'] = loss.item()
-                if loss.requires_grad:
-                    loss.backward()
-                return loss
-            self.lbfgs.step(closure)
-        return res
-    
-
-class BurgersNet:
-    def __init__(self, model, device):
-        self.device=device
-        self.model = model.to(self.device)
-        self.mseloss = torch.nn.MSELoss()
-        self.adam = torch.optim.Adam(self.model.parameters())
-        self.lbfgs = torch.optim.LBFGS(self.model.parameters())
-
-    def training(self, X_int_train, X_bc_train, X_ic_train, y_bc_train,y_ic_train, adam_epochs, lbfgs_epochs):
-        res = pd.DataFrame(None, columns=['Training Loss'], dtype=float)
-        self.model.train()
-        for e in range(adam_epochs):
-            self.adam.zero_grad()
-
-            y_bc_pred = self.model(X_bc_train)
-            loss_bc = self.mseloss(y_bc_pred, y_bc_train)
-
-            y_ic_pred = self.model(X_ic_train)
-            loss_ic = self.mseloss(y_ic_pred, y_ic_train)
-
-            u = self.model(X_int_train)
-            loss_pde = BurgersPDE(X_int_train, u, self.device, self.mseloss)
-            
-            loss = loss_pde + loss_bc + loss_ic
-            res.loc[e, 'Training Loss'] = loss.item()
-            loss.backward()
-            self.adam.step()
-        print("We are done with Adam, moving into L-BFGS!")
-        for e in range(lbfgs_epochs):
-            def closure():
-                if torch.is_grad_enabled():
-                    self.lbfgs.zero_grad()
-                u = self.model(X_int_train)
-                loss_pde = BurgersPDE(X_int_train, u, self.device, self.mseloss)
-                y_bc_pred = self.model(X_bc_train)
-                loss_bc = self.mseloss(y_bc_pred, y_bc_train)
-                y_ic_pred = self.model(X_ic_train)
-                loss_ic = self.mseloss(y_ic_pred, y_ic_train)
-                loss = loss_pde + loss_bc + loss_ic
-                res.loc[adam_epochs + e +1, 'Training Loss'] = loss.item()
-                if loss.requires_grad:
-                    loss.backward()
-                return loss
-            self.lbfgs.step(closure)
-        return res    
+   

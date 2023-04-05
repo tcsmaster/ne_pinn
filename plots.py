@@ -182,48 +182,35 @@ def run_2layer_accuracy_plots(pde,
     if not os.path.isdir(figures_directory):
         os.makedirs(figures_directory)
     for gamma_1 in gamma_1_list:
-        
-        # Create figure and plot data
         fig = plt.figure(figsize=(20, 10))
         ax = data[gamma_1].plot()
-    
-        # Set title, label legend and x- and y-axes
-        ax.set_title(f'{acc} for gamma_1={gamma_1} for {pde} pde')
-        plt.legend(title='gamma_2', loc='center left', bbox_to_anchor=(1,0.5))
+        ax.set_title(f'{acc} for $\gamma_1={{{gamma_1}}}$ for {pde} pde')
+        plt.legend(title='$\gamma_2$', loc='best')
         plt.xlabel('Number of Epochs')
         plt.ylabel(acc)
         plt.yscale('log')
         plt.grid()
-        
-        # Generate file name
+
         fname = f'plot_{pde}_acc_{acc}_gamma1_{gamma_1}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}'
 
-        fig_path = os.path.join(figures_directory, fname)
-        
+        fig_path = os.path.join(figures_directory, fname)       
         ax.figure.savefig(fig_path + '.jpg', dpi=300, bbox_inches='tight')
         plt.close('all')      
         
     for gamma_2 in gamma_2_list:
-        # Create figure and plot data
         fig = plt.figure(figsize=(20, 10))
         ax = data.xs(gamma_2, level=1, axis=1).plot()
-    
-        # Set title, label legend and x- and y-axes
-        ax.set_title(f'{acc} for gamma_2={gamma_2}')
-        plt.legend(title='gamma_1', loc='center left', bbox_to_anchor=(1,0.5))
+        ax.set_title(f'{acc} for $\gamma_2={{{gamma_2}}}$')
+        plt.legend(title='$\gamma_1$', loc='best')
         plt.xlabel('Number of Epochs')
         plt.ylabel(acc)
         plt.yscale('log')
         plt.grid()
-        
-        # Generate file name
+
         fname = f'plot_{pde}_acc_{acc}_gamma2_{gamma_2}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}'
 
-        # Generate full path
         fig_path = os.path.join(figures_directory, fname)
-        # Save figure
         ax.figure.savefig(fig_path + '.jpg', dpi=300, bbox_inches='tight')
-        #ax.figure.savefig(fig_path + '.pdf', dpi=300, bbox_inches='tight')
         plt.close('all')
     return
 
@@ -276,7 +263,6 @@ def run_3layer_accuracy_plots(pde,
     figures_directory = os.path.join(directory, f'figures/{pde}/3layer')
     if not os.path.isdir(figures_directory):
         os.makedirs(figures_directory)
-    # Create figures and plot data
     for gamma_1 in gamma_1_list:
         
         fig = plt.figure(figsize=(20, 10))
@@ -288,24 +274,19 @@ def run_3layer_accuracy_plots(pde,
                 plt.plot(data[(gamma_1, gamma_2, gamma_3)],
                          color=colors[count_1],
                          linestyle=line_styles[count_2])
-
-        # Set title, label legend and x- and y-axes
+      
         ax = fig.axes[0]
         plt.ylabel(acc)
-        ax.set_title(f'{acc} for gamma_1={gamma_1} for {pde} pde')
-        plt.legend(legend_labels, title='(gamma_2, gamma_3)', loc='lower center', bbox_to_anchor=(0.5, -0.2), ncol=3)
+        ax.set_title(f'{acc} for $\gamma_1={{{gamma_1}}}$ for {pde} pde')
+        plt.legend(legend_labels, title='$(\gamma_2, \gamma_3)$', loc='best', ncol=3)
         plt.xlabel('Number of Epochs')
         plt.yscale('log')
-    
-        
-        # Generate file name
+        plt.grid()
+
         fname = f'plot_{pde}_acc_{acc}_gamma1_{gamma_1}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_hidden3_{hidden_units_3}'
     
         fig_path = os.path.join(figures_directory, fname)
-        
-        # Save figure
         ax.figure.savefig(fig_path + '.jpg', dpi=300, bbox_inches='tight')
-        #ax.figure.savefig(fig_path + '.pdf', dpi=300, bbox_inches='tight')
         plt.close('all')
     for gamma_2 in gamma_2_list:
         
@@ -316,28 +297,22 @@ def run_3layer_accuracy_plots(pde,
 
             for count_2, gamma_3 in enumerate(gamma_3_list):
                 legend_labels += [(gamma_1, gamma_3)]
-                plt.plot(
-                    data[(gamma_1, gamma_2, gamma_3)],
-                    color=colors[count_1],
-                    linestyle=line_styles[count_2])
+                plt.plot(data[(gamma_1, gamma_2, gamma_3)],
+                         color=colors[count_1],
+                         linestyle=line_styles[count_2])
 
-        # Set title, label legend and x- and y-axes
         ax = fig.axes[0]
         plt.ylabel(acc)
-        ax.set_title(f'{acc} for gamma_2={gamma_2} for {pde} pde')
-        plt.legend(legend_labels, title='(gamma_1, gamma_3)', loc='lower center', bbox_to_anchor=(0.5, -0.2), ncol=3)
+        ax.set_title(f'{acc} for $\gamma_2={{{gamma_2}}}$ for {pde} pde')
+        plt.legend(legend_labels, title='$(\gamma_1, \gamma_3)$', loc='best', ncol=3)
         plt.xlabel('Number of Epochs')
         plt.yscale('log')
+        plt.grid()
     
-        
-        # Generate file name
         fname = f'plot_{pde}_acc_{acc}_gamma2_{gamma_2}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_hidden3_{hidden_units_3}'
     
         fig_path = os.path.join(figures_directory, fname)
-        
-        # Save figure
         ax.figure.savefig(fig_path + '.jpg', dpi=300, bbox_inches='tight')
-        #ax.figure.savefig(fig_path + '.pdf', dpi=300, bbox_inches='tight')
         plt.close('all')
     for gamma_3 in gamma_3_list:
         
@@ -352,23 +327,18 @@ def run_3layer_accuracy_plots(pde,
                     color=colors[count_1],
                     linestyle=line_styles[count_2])
 
-        # Set title, label legend and x- and y-axes
         ax = fig.axes[0]
         plt.ylabel(acc)
-        ax.set_title(f'{acc} for gamma_3={gamma_3} for {pde} pde')
-        plt.legend(legend_labels, title='(gamma_1, gamma_2)', loc='lower center', bbox_to_anchor=(0.5, -0.2), ncol=3)
+        ax.set_title(f'{acc} for $\gamma_3={{{gamma_3}}}$ for {pde} pde')
+        plt.legend(legend_labels, title='$(gamma_1, gamma_2)$', loc='best', ncol=3)
         plt.xlabel('Number of Epochs')
         plt.yscale('log')
-    
-        
-        # Generate f    ile name
+        plt.grid()
+
         fname = f'plot_{pde}_acc_{acc}_gamma3_{gamma_3}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_hidden3_{hidden_units_3}'
 
         fig_path = os.path.join(figures_directory, fname)
-
-        # Save figure
         ax.figure.savefig(fig_path + '.jpg', dpi=300, bbox_inches='tight')
-        #ax.figure.savefig(fig_path + '.pdf', dpi=300, bbox_inches='tight')
         plt.close('all')
     return
 
@@ -428,16 +398,39 @@ def run_2layer_accuracy_plots_multiple_hidden_units(pde,
     fname = f'plot_{pde}_acc_{acc}_gamma1_{gamma_1}_gamma2_{gamma_2}'
     
     # Generate full path
-    figures_directory = os.path.join(directory, f'figures\\{pde}\\')
+    figures_directory = os.path.join(directory, f'figures/{pde}/')
     if not os.path.isdir(figures_directory):
         os.makedirs(figures_directory)
     fig_path = os.path.join(figures_directory, fname)
     
-    # Save figure
+    
     ax.figure.savefig(fig_path + '.jpg', dpi=300, bbox_inches='tight')
     #ax.figure.savefig(fig_path + '.pdf', dpi=300, bbox_inches='tight')
     plt.close('all')
     return
+
+if __name__ == '__main__':
+    pde = "Burgers"
+    acc = "Training Loss"
+    gamma_1_list = [0.5, 0.7, 1.0]
+    gamma_2_list = [0.5, 0.7, 1.0]
+    gamma_3_list = [0.5, 0.7, 1.0]
+    hidden_units_1 = 100
+    hidden_units_2 = 100
+    hidden_units_3 = 100
+    epochs = 20000
+    directory = os.getcwd()
+
+    run_3layer_accuracy_plots(pde=pde,
+                              epochs=epochs,
+                              acc=acc,
+                              gamma_1_list = gamma_1_list,
+                              gamma_2_list = gamma_2_list,
+                              gamma_3_list=gamma_3_list,
+                              hidden_units_1 = hidden_units_1,
+                              hidden_units_2 = hidden_units_2,
+                              hidden_units_3 = hidden_units_3,
+                              directory=directory)
 
 
 

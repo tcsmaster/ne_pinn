@@ -65,6 +65,8 @@ coverage.xml
 *.mo
 *.pot
 
+wandb/
+
 # Django stuff:
 *.log
 local_settings.py

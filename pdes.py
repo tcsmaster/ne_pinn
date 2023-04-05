@@ -1,6 +1,7 @@
 import torch
+from torch.nn import MSELoss
 from numpy import pi
-def NSPDE(x, u, device, loss):
+def NSPDE(x, u, device):
     u_vel,v_vel,w_vel,p=u[:, 0:1],u[:, 1:2],u[:, 2:3],u[:, 3:4]
     du_dX = torch.autograd.grad(inputs=x,
                                 outputs=u_vel,
@@ -84,26 +85,43 @@ def NSPDE(x, u, device, loss):
                             retain_graph=True
         )[0][:, 3]
             
-    momentum_x = loss(u_vel_t + u_vel.squeeze() * u_vel_x + v_vel.squeeze() * u_vel_y + w_vel.squeeze() * u_vel_z,\
+    momentum_x = MSELoss()(u_vel_t + u_vel.squeeze() * u_vel_x + v_vel.squeeze() * u_vel_y + w_vel.squeeze() * u_vel_z,\
                       p_x - u_vel_xx - u_vel_yy - u_vel_zz)
-    momentum_y = loss(v_vel_t + u_vel.squeeze() * v_vel_x + v_vel.squeeze() * v_vel_y + w_vel.squeeze() * v_vel_z,\
+    momentum_y = MSELoss()(v_vel_t + u_vel.squeeze() * v_vel_x + v_vel.squeeze() * v_vel_y + w_vel.squeeze() * v_vel_z,\
                       p_y - v_vel_xx - v_vel_yy - v_vel_zz)
-    momentum_z = loss(w_vel_t + u_vel.squeeze() * w_vel_x + v_vel.squeeze() * w_vel_y + w_vel.squeeze() * w_vel_z,\
+    momentum_z = MSELoss()(w_vel_t + u_vel.squeeze() * w_vel_x + v_vel.squeeze() * w_vel_y + w_vel.squeeze() * w_vel_z,\
                       p_z - w_vel_xx - w_vel_yy - w_vel_zz)
-    continuity = loss(u_vel_x + v_vel_y + w_vel_z, torch.zeros_like(u_vel_x))
+    continuity = MSELoss()(u_vel_x + v_vel_y + w_vel_z, torch.zeros_like(u_vel_x))
             
     loss = momentum_x + momentum_y + momentum_z + continuity
     return loss
 
-def BurgersPDE(x, u, device, loss):
-    du_dX = torch.autograd.grad(inputs=x, outputs=u, grad_outputs=torch.ones_like(u).to(device),create_graph=True)[0]
+def BurgersPDE(x, u, device):
+    du_dX = torch.autograd.grad(inputs=x,
+                                outputs=u,
+                                grad_outputs=torch.ones_like(u).to(device),
+                                create_graph=True,
+            )[0]
     du_dt = du_dX[:,1]
     du_dx = du_dX[:,0]
-    du_dxx = torch.autograd.grad(inputs=x, outputs=du_dx, grad_outputs=torch.ones_like(du_dx).to(device), retain_graph=True)[0][:, 0]
-    loss = loss(du_dt + du_dx*u.squeeze(),-0.01/pi*du_dxx)
+    du_dxx = torch.autograd.grad(inputs=x,
+                                 outputs=du_dx,
+                                 grad_outputs=torch.ones_like(du_dx).to(device),
+                                 retain_graph=True,
+             )[0][:, 0]
+    print(du_dxx.shape)
+    loss = MSELoss()(du_dt + du_dx*u.squeeze(),0.01/pi*du_dxx)
     return loss
 
-def PoissonPDE(x, u, device, loss):
-    du_dx = torch.autograd.grad(inputs=x, outputs=u, grad_outputs=torch.ones_like(u).to(device),retain_graph = True, create_graph=True)[0]
-    du_dxx = torch.autograd.grad(inputs=x, outputs=du_dx, grad_outputs=torch.ones_like(du_dx).to(device), retain_graph=True)[0][:, 0]
-    loss_pde = loss(-du_dxx, (pi**2)*torch.sin(pi*x.squeeze()))
+def PoissonPDE(x, u, device):
+    du_dx = torch.autograd.grad(inputs=x,
+                                outputs=u,
+                                grad_outputs=torch.ones_like(u).to(device),
+                                create_graph=True
+            )[0]
+    du_dxx = torch.autograd.grad(inputs=x,
+                                 outputs=du_dx,
+                                 grad_outputs=torch.ones_like(du_dx).to(device),
+                                 retain_graph=True
+             )[0][:, 0]
+    loss_pde = MSELoss()(-du_dxx, (pi**2)*torch.sin(pi*x.squeeze()))
