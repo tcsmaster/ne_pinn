@@ -29,12 +29,12 @@ class BurgersNet():
             optimizer.zero_grad()
             u = self.model(X_int_train)
             loss_pde = BurgersPDE(X_int_train, u, self.device)
-            # y_bc_pred = self.model(X_bc_train)
-            # loss_bc = torch.nn.MSELoss()(y_bc_pred, y_bc_train)
-            # y_ic_pred = self.model(X_ic_train)
-            # loss_ic = torch.nn.MSELoss()(y_ic_pred, y_ic_train)
-            # loss = loss_pde + loss_bc + loss_ic
-            loss = torch.nn.MSELoss()(u, torch.zeros_like(u))
+            y_bc_pred = self.model(X_bc_train)
+            loss_bc = torch.nn.MSELoss()(y_bc_pred, y_bc_train)
+            y_ic_pred = self.model(X_ic_train)
+            loss_ic = torch.nn.MSELoss()(y_ic_pred, y_ic_train)
+            loss = loss_pde + loss_bc + loss_ic
+            #loss = torch.nn.MSELoss()(u, torch.zeros_like(u))
             loss.backward()
             res.loc[e, "Training Loss"] = loss.item()
             optimizer.step()
@@ -80,7 +80,7 @@ def main(pde:str,
          hidden_units_1:int,
          hidden_units_2:int,
          adam_epochs:int,
-         epochs:int,
+         lbfgs_epochs:int,
          directory,
          sampler=None,
          gamma_3 = None,
@@ -112,15 +112,9 @@ def main(pde:str,
     """ 
     print(f"PDE:Burgers")
     if (not gamma_3):
-<<<<<<< HEAD
-        print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, h_1={hidden_units_1}, h_2={hidden_units_2}, epochs={adam_epochs + epochs}")
-    else:
-        print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, g_3={gamma_3}, h_1={hidden_units_1}, h_2={hidden_units_2}, h_3={hidden_units_3}, epochs = {adam_epochs + epochs}")
-=======
         print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, h_1={hidden_units_1}, h_2={hidden_units_2}, epochs={adam_epochs}")
     else:
         print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, g_3={gamma_3}, h_1={hidden_units_1}, h_2={hidden_units_2}, h_3={hidden_units_3}, epochs = {adam_epochs}")
->>>>>>> 8b771b09d271058f8e15e0f15cbadfa22d263c68
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     if (not gamma_3):
         net = BurgersNet(MLP2(num_input=2,
@@ -172,23 +166,14 @@ def main(pde:str,
                                X_bc_train=X_bc_train,
                                X_ic_train=X_ic_train,
                                y_bc_train=y_bc_train,
-<<<<<<< HEAD
-                               y_ic_train=y_ic,
-                               epochs=epochs
-=======
                                y_ic_train=y_ic_train,
                                adam_epochs=adam_epochs,
                                lbfgs_epochs=lbfgs_epochs
->>>>>>> 8b771b09d271058f8e15e0f15cbadfa22d263c68
                   )
 
         if not gamma_3:
             file_name = generate_file_name(pde=pde,
-<<<<<<< HEAD
-                                           epochs=epochs,
-=======
                                            epochs=adam_epochs + lbfgs_epochs,
->>>>>>> 8b771b09d271058f8e15e0f15cbadfa22d263c68
                                            hidden_units_1=hidden_units_1,
                                            hidden_units_2=hidden_units_2,
                                            gamma_1=gamma_1,
@@ -198,11 +183,7 @@ def main(pde:str,
             results_directory = os.path.join(directory, place)
         else:
             file_name = generate_file_name(pde=pde,
-<<<<<<< HEAD
-                                           epochs=epochs,
-=======
                                            epochs=adam_epochs + lbfgs_epochs,
->>>>>>> 8b771b09d271058f8e15e0f15cbadfa22d263c68
                                            hidden_units_1=hidden_units_1,
                                            hidden_units_2=hidden_units_2,
                                            gamma_1=gamma_1,
@@ -241,12 +222,6 @@ def main(pde:str,
         X_ic_train = torch.stack(torch.meshgrid(data_gen(space=[torch.Tensor([-1.,1.])], n_samples=100, sampler=sampler).squeeze(), torch.Tensor([0.]), indexing='ij')).reshape(2, -1).T.to(device)
         y_ic_train = -torch.sin(np.pi*X_ic_train[:, 0]).unsqueeze(1).to(device)
 
-<<<<<<< HEAD
-        results = net.training(X_int_train=X_int_train, X_bc_train=X_bc_train, X_ic_train=X_ic_train, y_bc_train=y_bc_train,y_ic_train=y_ic_train,eoccc)  # Save accuracy results
-        if not gamma_3:
-            file_name = generate_file_name(pde=pde,
-                                           epochs=epochs,
-=======
         results = net.training(X_int_train=X_int_train,
                                X_bc_train=X_bc_train,
                                X_ic_train=X_ic_train,
@@ -259,7 +234,6 @@ def main(pde:str,
         if not gamma_3:
             file_name = generate_file_name(pde=pde,
                                            epochs=adam_epochs,
->>>>>>> 8b771b09d271058f8e15e0f15cbadfa22d263c68
                                            hidden_units_1=hidden_units_1,
                                            hidden_units_2=hidden_units_2,
                                            gamma_1=gamma_1,
@@ -269,11 +243,7 @@ def main(pde:str,
             results_directory = os.path.join(directory, place)
         else:
             file_name = generate_file_name(pde=pde,
-<<<<<<< HEAD
-                                           epochs=adam_epochs+epochs,
-=======
                                            epochs=adam_epochs,
->>>>>>> 8b771b09d271058f8e15e0f15cbadfa22d263c68
                                            hidden_units_1=hidden_units_1,
                                            hidden_units_2=hidden_units_2,
                                            gamma_1=gamma_1,
@@ -299,16 +269,10 @@ if __name__ == '__main__':
     gamma_3_list = [0.5]
     hidden_units_1=100
     hidden_units_2=100
-<<<<<<< HEAD
-    #hidden_units_3=100
-    epochs = 30000
-    #sampler_list = ['random','LHS', 'Halton', 'Sobol']
-=======
     hidden_units_3=100
-    adam_epochs = 2
+    adam_epochs = 20000
     lbfgs_epochs=0
     sampler_list = ['random', 'LHS', 'Sobol', 'Halton']
->>>>>>> 8b771b09d271058f8e15e0f15cbadfa22d263c68
     directory=os.getcwd()
     for gamma_1 in gamma_1_list:
         for gamma_2 in gamma_2_list:
@@ -318,13 +282,8 @@ if __name__ == '__main__':
                      gamma_2=gamma_2,
                      hidden_units_1=hidden_units_1,
                      hidden_units_2=hidden_units_2,
-<<<<<<< HEAD
-                     eos,vccc
-                     directory=directory
-=======
                      adam_epochs=adam_epochs,
                      lbfgs_epochs=lbfgs_epochs,
                      directory=directory,
                      sampler=sampler
->>>>>>> 8b771b09d271058f8e15e0f15cbadfa22d263c68
                 )
