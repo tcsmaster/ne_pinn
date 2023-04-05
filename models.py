@@ -126,40 +126,6 @@ class MLP3(nn.Module):
                 x = self.output_transform(inputs, x)
             return x
     
-class PoissonNet:
-    """
-    This class is a blueprint for solving a 1D Heat equation with Dirichlet BC
-    """
-    def __init__(self, model, device):
-        self.device=device
-        self.model = model.to(self.device)
-        self.mseloss = torch.nn.MSELoss()
-        self.optimizer = torch.optim.Adam(self.model.parameters())
-    
-    def training(self, X_int_train,X_bc_train,x_int_test,y_bc_train, y_int_test, epochs):
-        res = pd.DataFrame(None, columns=['Training Loss', 'Test Loss'], dtype=float)
-        for e in range(epochs):
-            self.model.train()
-
-            self.optimizer.zero_grad()
-            y_bc_pred = self.model(X_bc_train)
-            loss_bc = self.mseloss(y_bc_pred, y_bc_train)
-            
-            u = self.model(X_int_train)
-            
-            
-            loss = loss_pde + loss_bc
-            res.loc[e, 'Training Loss'] = torch.sum(loss.item())
-            loss.backward(retain_graph=True)
-            self.optimizer.step()
-     
-            self.model.eval() 
-            with torch.no_grad():
-                y_test_pred = self.model(x_int_test)
-                test_loss = self.mseloss(y_test_pred, y_int_test)
-                res.loc[e, 'Test Loss'] = test_loss.item()
-        return res
-
 
 class ReadyNet:
     """

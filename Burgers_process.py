@@ -23,18 +23,18 @@ class BurgersNet():
                  lbfgs_epochs
         ):
         res = pd.DataFrame(None, columns = ["Training Loss"], dtype=float)
-        optimizer = Adam(self.model.parameters())
+        optimizer = Adam(self.model.parameters(), amsgrad=True)
         self.model.train()
         for e in range(adam_epochs):
             optimizer.zero_grad()
             u = self.model(X_int_train)
             loss_pde = BurgersPDE(X_int_train, u, self.device)
-            # y_bc_pred = self.model(X_bc_train)
-            # loss_bc = torch.nn.MSELoss()(y_bc_pred, y_bc_train)
-            # y_ic_pred = self.model(X_ic_train)
-            # loss_ic = torch.nn.MSELoss()(y_ic_pred, y_ic_train)
-            # loss = loss_pde + loss_bc + loss_ic
-            loss = torch.nn.MSELoss()(u, torch.zeros_like(u))
+            y_bc_pred = self.model(X_bc_train)
+            loss_bc = torch.nn.MSELoss()(y_bc_pred, y_bc_train)
+            y_ic_pred = self.model(X_ic_train)
+            loss_ic = torch.nn.MSELoss()(y_ic_pred, y_ic_train)
+            loss = loss_pde + loss_bc + loss_ic
+            #loss = torch.nn.MSELoss()(u, torch.zeros_like(u))
             loss.backward()
             res.loc[e, "Training Loss"] = loss.item()
             optimizer.step()
@@ -160,7 +160,7 @@ def main(pde:str,
         y_bc_train = torch.cat([y_bc1, y_bc2]).unsqueeze(1).to(device)
         X_ic_train = torch.stack(torch.meshgrid(x,
                                                 t[0],
-                                                indexing='ij')).reshape(2, -1).T         
+                                                indexing='ij')).reshape(2, -1).T.to(device)       
         y_ic_train = -torch.sin(np.pi * X_ic_train[:, 0]).unsqueeze(1).to(device)
         results = net.training(X_int_train=X_int_train,
                                X_bc_train=X_bc_train,
@@ -264,19 +264,19 @@ def main(pde:str,
 
 if __name__ == '__main__':
     pde='Burgers'
-    gamma_1_list = [0.5]
-    gamma_2_list = [0.5]
-    gamma_3_list = [0.5]
+    gamma_1_list = [0.5, 0.7, 1.0]
+    gamma_2_list = [0.5, 0.7, 1.0]
+    gamma_3_list = [0.5, 0.7, 1.0]
     hidden_units_1=100
     hidden_units_2=100
     hidden_units_3=100
-    adam_epochs = 2
+    adam_epochs = 20000
     lbfgs_epochs=0
     sampler_list = ['random', 'LHS', 'Sobol', 'Halton']
     directory=os.getcwd()
     for gamma_1 in gamma_1_list:
         for gamma_2 in gamma_2_list:
-            for sampler in sampler_list:
+            for gamma_3 in gamma_3_list:
                 main(pde=pde,
                      gamma_1=gamma_1,
                      gamma_2=gamma_2,
@@ -285,5 +285,6 @@ if __name__ == '__main__':
                      adam_epochs=adam_epochs,
                      lbfgs_epochs=lbfgs_epochs,
                      directory=directory,
-                     sampler=sampler
+                     gamma_3 = gamma_3,
+                     hidden_units_3 = hidden_units_3
                 )
