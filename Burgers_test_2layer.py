@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 from Burgers_process import *
 from utils import *
 
-def l2_relative_loss(input, target):
-    return np.dot(input.T, target)/np.linalg.norm(target)
-def rmse_vec_error(input, target):
-    return np.linalg.norm(input - target) / np.sqrt(len(input))
+def l2_relative_loss(pred, target):
+    return np.linalg.norm(pred- target)/np.linalg.norm(target)
+def rmse_vec_error(pred, target):
+    return np.linalg.norm(pred - target) / np.sqrt(len(pred))
 
 pde = "Burgers"
 epochs=20000
@@ -59,9 +59,9 @@ for gamma_1 in gamma_1_list:
         ax.set_title(f"t={time}")
     plt.suptitle(f"Prediction for $\gamma_1 = {{{gamma_1}}}$")
     file_name = f"plot_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}"
-    plt.savefig("/content/thesis/figures/Burgers_test/" + file_name + ".jpg")
+    plt.savefig("/content/thesis/figures_test/Burgers_test/2layer/" + file_name + ".jpg")
 out_rmse = np.hstack(rmse_error)
 out_rel_l2 = np.hstack(rel_l2_error)
-pd.DataFrame(out_rmse, index = ["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 1.0"], columns=pd.MultiIndex.from_product((["t=0", "t=0.25", "t=0.5", "t=0.75"], ["gamma_1 = 0.5", "gamma_1 = 0.7", "gamma_1 = 1.0"]))).to_csv("rmse_table.csv")
-pd.DataFrame(out_rmse, index = ["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 1.0"], columns=pd.MultiIndex.from_product((["t=0", "t=0.25", "t=0.5", "t=0.75"], ["gamma_1 = 0.5", "gamma_1 = 0.7", "gamma_1 = 1.0"]))).to_csv("rel_l2_table.csv")
+pd.DataFrame(out_rmse, index = ["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 1.0"], columns=pd.MultiIndex.from_product((["t=0", "t=0.25", "t=0.5", "t=0.75"], ["gamma_1 = 0.5", "gamma_1 = 0.7", "gamma_1 = 1.0"]))).to_csv("/content/thesis/Error_tables/Burgers/Burgers_2layer_rmse_table.csv")
+pd.DataFrame(out_rel_l2, index = ["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 1.0"], columns=pd.MultiIndex.from_product((["t=0", "t=0.25", "t=0.5", "t=0.75"], ["gamma_1 = 0.5", "gamma_1 = 0.7", "gamma_1 = 1.0"]))).to_csv("/content/thesis/Error_tables/Burgers/Burgers_2layer_rel_l2_table.csv")
 

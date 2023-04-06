@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 from Poisson_process import *
 from utils import *
 
-def l2_relative_loss(input, target):
-    return np.dot(input.T, target)/np.linalg.norm(target)
-def rmse_vec_error(input, target):
-    return np.linalg.norm(input - target) / np.sqrt(len(input))
+def l2_relative_loss(pred, target):
+    return np.linalg.norm(pred- target)/np.linalg.norm(target)
+def rmse_vec_error(pred, target):
+    return np.linalg.norm(pred - target) / np.sqrt(len(pred))
 
 pde = "Poisson"
 device = torch.device("cpu")
@@ -33,7 +33,7 @@ for gamma_1 in gamma_1_list:
         with torch.no_grad():
             pred = net.model(test_data)
         pred = pred.detach().numpy()
-        rmse_error[gamma_2_list.index(gamma_2), gamma_1_list.index(gamma_1)] = rmse_vec_error(pred, true_sol)
+        rmse_error[gamma_2_list.index(gamma_2), gamma_1_list.index(gamma_1)] = rmse_vec_error(pred.ravel(), true_sol.ravel())
         rel_l2_error[gamma_2_list.index(gamma_2), gamma_1_list.index(gamma_1)] = l2_relative_loss(pred, true_sol)
         ax.plot(test_data, pred, label=f"$\gamma_2 = {{{gamma_2}}}$")
     ax.plot(test_data, true_sol, label = "True solution")
@@ -41,6 +41,6 @@ for gamma_1 in gamma_1_list:
     ax.grid()
     ax.set_title(f"Prediction for $\gamma_1 = {{{gamma_1}}}$")
     file_name = f"plot_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}"
-    plt.savefig(file_name + ".jpg")
-pd.DataFrame(rmse_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 1.0"], columns=["gamma_1 = 0.5", "gamma_1 = 0.7", "gamma_1 = 1.0"]).to_csv("rmse_table.csv")
-pd.DataFrame(rel_l2_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 1.0"], columns=["gamma_1 = 0.5", "gamma_1 = 0.7", "gamma_1 = 1.0"]).to_csv("rel_l2_table.csv")
+    plt.savefig("/content/thesis/figures_test/Poisson_test/2layer/" + file_name + ".jpg")
+pd.DataFrame(rmse_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 1.0"], columns=["gamma_1 = 0.5", "gamma_1 = 0.7", "gamma_1 = 1.0"]).to_csv("/content/thesis/Error_tables/Poisson/rmse_table.csv")
+pd.DataFrame(rel_l2_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 1.0"], columns=["gamma_1 = 0.5", "gamma_1 = 0.7", "gamma_1 = 1.0"]).to_csv("/content/thesis/Error_tables/Poisson/rel_l2_table.csv")

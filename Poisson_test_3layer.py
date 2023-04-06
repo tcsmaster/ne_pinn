@@ -7,7 +7,7 @@ from Poisson_process import *
 from utils import *
 
 def l2_relative_loss(input, target):
-    return np.dot(input.T, target)/np.linalg.norm(target)
+    return np.linalg.norm(input- target)/np.linalg.norm(target)
 def rmse_vec_error(input, target):
     return np.linalg.norm(input - target) / np.sqrt(len(input))
 
@@ -44,9 +44,9 @@ for el in itertools.product(gamma_2_list, gamma_3_list):
     ax.grid()
     ax.set_title(f"Prediction for $\gamma_2 = {{{el[0]}}}, \gamma_3 = {{{el[1]}}}$")
     file_name = f"plot_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_hidden3_{hidden_units_3}_gamma1_{gamma_1}_gamma2_{el[0]}_gamma3_{el[1]}_epochs_{epochs}"
-    plt.savefig("/content/thesis/figures/Poisson/" + file_name + ".jpg")
+    plt.savefig("/content/thesis/figures_test/Poisson_test/3layer/" + file_name + ".jpg")
 
 out_rmse = np.row_stack(rmse_error.reshape(3, -1))
 out_rel_l2 = np.row_stack(rel_l2_error.reshape(3, -1))
-pd.DataFrame(out_rmse, index = ["gamma_1 = 0.5", "gamma_1 = 0.7", "gamma_1 = 1.0"], columns=pd.MultiIndex.from_product((["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 1.0"], ["gamma_3 = 0.5", "gamma_3 = 0.7", "gamma_3 = 1.0"]))).to_csv("rmse_table.csv")
-pd.DataFrame(out_rel_l2, index = ["gamma_1 = 0.5", "gamma_1 = 0.7", "gamma_1 = 1.0"], columns=pd.MultiIndex.from_product((["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 1.0"], ["gamma_3 = 0.5", "gamma_3 = 0.7", "gamma_3 = 1.0"]))).to_csv("rel_l2_table.csv")
+pd.DataFrame(out_rmse, index = ["gamma_1 = 0.5", "gamma_1 = 0.7", "gamma_1 = 1.0"], columns=pd.MultiIndex.from_product((["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 1.0"], ["gamma_3 = 0.5", "gamma_3 = 0.7", "gamma_3 = 1.0"]))).to_csv("/content/thesis/Error_tables/Poisson/rmse_table.csv")
+pd.DataFrame(out_rel_l2, index = ["gamma_1 = 0.5", "gamma_1 = 0.7", "gamma_1 = 1.0"], columns=pd.MultiIndex.from_product((["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 1.0"], ["gamma_3 = 0.5", "gamma_3 = 0.7", "gamma_3 = 1.0"]))).to_csv("/content/thesis/Error_tables/Poisson/rel_l2_table.csv")
