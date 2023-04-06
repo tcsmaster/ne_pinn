@@ -29,7 +29,8 @@ class NSNet:
             loss = loss_pde + loss_bic
             loss.backward(retain_graph=True)
             optimizer.step()
-            res.loc[e, 'Training Loss'] = loss_pde.item()
+            res.loc[e, 'Training Loss'] = loss.item()
+            print(loss.item())
         return res
 
 def main(pde,
@@ -294,14 +295,17 @@ if __name__ == '__main__':
     hidden_units_1=100
     hidden_units_2=100
     hidden_units_3=100
-    adam_epochs=20000
+    adam_epochs=30000
     directory=os.getcwd()
     for gamma_1 in gamma_1_list:
         for gamma_2 in gamma_2_list:
-            main(pde=pde,gamma_1=gamma_1,
+            for gamma_3 in gamma_3_list:
+                main(pde=pde,gamma_1=gamma_1,
                      gamma_2=gamma_2,
+                     gamma_3 = gamma_3,
                      hidden_units_1=hidden_units_1,
                      hidden_units_2=hidden_units_2,
+                     hidden_units_3 = hidden_units_3,
                      adam_epochs=adam_epochs,
                      directory=directory
                 )
