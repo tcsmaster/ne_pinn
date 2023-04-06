@@ -105,16 +105,16 @@ def main(pde,
               )
     print(f"Model: {net.model}")
     
-    X_int_train = torch.arange(-0.9, 1., 0.1).reshape(1, -1).T.to(device)
+    X_int_train = torch.arange(-0.9, 1., 0.1, device=device).reshape(1, -1).T
     X_int_train.requires_grad=True
 
-    bc1 = torch.Tensor([-1.])
-    bc2 = torch.Tensor([1.])
-    X_bc_train = torch.cat([bc1, bc2]).unsqueeze(1).to(device)
+    bc1 = torch.Tensor([-1.], device=device)
+    bc2 = torch.Tensor([1.], device=device)
+    X_bc_train = torch.cat([bc1, bc2]).unsqueeze(1)
 
     y_bc1 = torch.zeros(len(bc1))
     y_bc2 = torch.zeros(len(bc2))
-    y_bc_train = torch.cat([y_bc1, y_bc2]).unsqueeze(1).to(device)
+    y_bc_train = torch.cat([y_bc1, y_bc2]).unsqueeze(1)
     results = net.training(X_int_train = X_int_train,
                            X_bc_train=X_bc_train,
                            y_bc_train = y_bc_train,
