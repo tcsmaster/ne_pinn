@@ -144,24 +144,24 @@ def main(pde:str,
 
     if not sampler:
         h = 0.05
-        x = torch.arange(-1, 1 + h, h, device=device)
-        t = torch.arange(0, 1 + h, h, device=device)
-        X_int_train = torch.stack(torch.meshgrid(x[1:-2], t[1:-2], indexing='ij')).reshape(2, -1).T.to(device)
-        X_int_train.requires_grad = True
+        x = torch.arange(-1, 1 + h, h, device=device,requires_grad=True)
+        t = torch.arange(0, 1 + h, h, device=device, requires_grad=True)
+        X_int_train = torch.stack(torch.meshgrid(x[1:-2], t[1:-2], indexing='ij')).reshape(2, -1).T
+
         bc1 = torch.stack(torch.meshgrid(x[0],
                                              t,
                                              indexing='ij')).reshape(2, -1).T
         bc2 = torch.stack(torch.meshgrid(x[-1],
                                              t,
                                              indexing='ij')).reshape(2, -1).T
-        X_bc_train = torch.cat([bc1, bc2]).to(device)
-        y_bc1 = torch.zeros(len(bc1))
-        y_bc2 = torch.zeros(len(bc2))
-        y_bc_train = torch.cat([y_bc1, y_bc2]).unsqueeze(1).to(device)
+        X_bc_train = torch.cat([bc1, bc2])
+        y_bc1 = torch.zeros(len(bc1), device=device)
+        y_bc2 = torch.zeros(len(bc2), device=device)
+        y_bc_train = torch.cat([y_bc1, y_bc2]).unsqueeze(1)
         X_ic_train = torch.stack(torch.meshgrid(x,
                                                 t[0],
-                                                indexing='ij')).reshape(2, -1).T.to(device)       
-        y_ic_train = -torch.sin(np.pi * X_ic_train[:, 0]).unsqueeze(1).to(device)
+                                                indexing='ij')).reshape(2, -1).T      
+        y_ic_train = -torch.sin(np.pi * X_ic_train[:, 0]).unsqueeze(1)
         results = net.training(X_int_train=X_int_train,
                                X_bc_train=X_bc_train,
                                X_ic_train=X_ic_train,
@@ -200,18 +200,18 @@ def main(pde:str,
         path = results_directory + file_name + "_model.pth"
         torch.save(net.model.state_dict(), path)
     else:
-        full_space = [torch.Tensor([-1., 0.]), torch.Tensor([1., 1.])]
+        full_space = [torch.tensor([-1., 0.], device=device,requires_grad=True), torch.tensor([1., 1.], device=device,requires_grad=True)]
         X_int_train = data_gen(space=full_space,
                                n_samples=8000,
                                sampler=sampler).to(device)
         X_int_train.requires_grad=True
-        bc1 = torch.stack(torch.meshgrid(torch.Tensor([-1.]),
-                                         data_gen(space=[torch.Tensor([0., 1.])],
+        bc1 = torch.stack(torch.meshgrid(torch.tensor([-1.], device=device,requires_grad=True),
+                                         data_gen(space=[torch.tensor([0., 1.], device=device,requires_grad=True)],
                                                   n_samples=100,
                                                   sampler=sampler).squeeze(),
                                          indexing='ij')).reshape(2, -1).T
-        bc2 = torch.stack(torch.meshgrid(torch.Tensor([1.]),
-                                         data_gen(space=[torch.Tensor([0., 1.])],
+        bc2 = torch.stack(torch.meshgrid(torch.tensor([1.], device=device,requires_grad=True),
+                                         data_gen(space=[torch.tensor([0., 1.], device=device,requires_grad=True)],
                                                   n_samples=100,
                                                   sampler=sampler).squeeze(),
                                          indexing='ij')).reshape(2, -1).T
@@ -219,8 +219,8 @@ def main(pde:str,
         y_bc1 = torch.zeros(len(bc1))
         y_bc2 = torch.zeros(len(bc2))
         y_bc_train = torch.cat([y_bc1, y_bc2]).unsqueeze(1).to(device)
-        X_ic_train = torch.stack(torch.meshgrid(data_gen(space=[torch.Tensor([-1.,1.])], n_samples=100, sampler=sampler).squeeze(), torch.Tensor([0.]), indexing='ij')).reshape(2, -1).T.to(device)
-        y_ic_train = -torch.sin(np.pi*X_ic_train[:, 0]).unsqueeze(1).to(device)
+        X_ic_train = torch.stack(torch.meshgrid(data_gen(space=[torch.tensor([-1.,1.], device=device,requires_grad=True)], n_samples=100, sampler=sampler).squeeze(), torch.tensor([0.]), indexing='ij')).reshape(2, -1).T.to(device)
+        y_ic_train = -torch.sin(np.pi*X_ic_train[:, 0]).unsqueeze(1)
 
         results = net.training(X_int_train=X_int_train,
                                X_bc_train=X_bc_train,
