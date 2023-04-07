@@ -144,8 +144,8 @@ def main(pde:str,
 
     if not sampler:
         h = 0.05
-        x = torch.arange(-1, 1 + h, h)
-        t = torch.arange(0, 1 + h, h)
+        x = torch.arange(-1, 1 + h, h, device=device)
+        t = torch.arange(0, 1 + h, h, device=device)
         X_int_train = torch.stack(torch.meshgrid(x[1:-2], t[1:-2], indexing='ij')).reshape(2, -1).T.to(device)
         X_int_train.requires_grad = True
         bc1 = torch.stack(torch.meshgrid(x[0],

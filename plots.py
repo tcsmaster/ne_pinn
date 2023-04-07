@@ -410,7 +410,7 @@ def run_2layer_accuracy_plots_multiple_hidden_units(pde,
     return
 
 if __name__ == '__main__':
-    pde = "Poisson"
+    pde = "Burgers"
     acc = "Training Loss"
     gamma_1_list = [0.5, 0.7, 1.0]
     gamma_2_list = [0.5, 0.7, 1.0]
