@@ -45,7 +45,7 @@ def load_accuracy_for_single_gamma(pde:str,
                                    gamma_2=gamma_2,
                                    hidden_units_3=hidden_units_3,
                                    gamma_3=gamma_3)
-            results_folder = f'results/{pde}/3layer/normalized/'
+            results_folder = f'results/{pde}/3layer/normalized/Adam_with_amsgrad/'
     else:
         if not gamma_3:
             fname = generate_file_name(pde=pde,
@@ -259,8 +259,8 @@ def run_3layer_accuracy_plots(pde,
                              directory=directory)
     
     line_styles = ['solid', 'dashed', 'dotted']
-    colors = ['blue', 'green', 'red']
-    figures_directory = os.path.join(directory, f'figures/{pde}/3layer')
+    colors = ['blue', 'green', 'orange']
+    figures_directory = os.path.join(directory, f'figures/{pde}/3layer/normalized/Adam_with_amsgrad/')
     if not os.path.isdir(figures_directory):
         os.makedirs(figures_directory)
     for gamma_1 in gamma_1_list:
@@ -330,7 +330,7 @@ def run_3layer_accuracy_plots(pde,
         ax = fig.axes[0]
         plt.ylabel(acc)
         ax.set_title(f'{acc} for $\gamma_3={{{gamma_3}}}$ for {pde} pde')
-        plt.legend(legend_labels, title='$(gamma_1, gamma_2)$', loc='best', ncol=3)
+        plt.legend(legend_labels, title='$(\gamma_1, \gamma_2)$', loc='best', ncol=3)
         plt.xlabel('Number of Epochs')
         plt.yscale('log')
         plt.grid()
@@ -410,7 +410,7 @@ def run_2layer_accuracy_plots_multiple_hidden_units(pde,
     return
 
 if __name__ == '__main__':
-    pde = "Burgers"
+    pde = "Poisson"
     acc = "Training Loss"
     gamma_1_list = [0.5, 0.7, 1.0]
     gamma_2_list = [0.5, 0.7, 1.0]
@@ -421,13 +421,15 @@ if __name__ == '__main__':
     epochs = 20000
     directory = os.getcwd()
 
-    run_2layer_accuracy_plots(pde=pde,
+    run_3layer_accuracy_plots(pde=pde,
                               epochs=epochs,
                               acc=acc,
                               gamma_1_list = gamma_1_list,
                               gamma_2_list = gamma_2_list,
+                              gamma_3_list = gamma_3_list,
                               hidden_units_1 = hidden_units_1,
                               hidden_units_2 = hidden_units_2,
+                              hidden_units_3 = hidden_units_3,
                               directory=directory)
 
 
