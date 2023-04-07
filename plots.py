@@ -35,7 +35,7 @@ def load_accuracy_for_single_gamma(pde:str,
                                    gamma_1=gamma_1,
                                    gamma_2=gamma_2
         )
-            results_folder = f'results/{pde}/2layer/normalized/'
+            results_folder = f'results/{pde}/2layer/normalized/Adam_with_amsgrad/'
         else:
             fname = generate_file_name(pde=pde,
                                    epochs=epochs,
@@ -178,7 +178,7 @@ def run_2layer_accuracy_plots(pde,
                              hidden_units_1=hidden_units_1,
                              hidden_units_2=hidden_units_2,
                              directory=directory)
-    figures_directory = os.path.join(directory, f"figures/{pde}/2layer/")
+    figures_directory = os.path.join(directory, f"figures/{pde}/2layer/Adam_with_amsgrad/")
     if not os.path.isdir(figures_directory):
         os.makedirs(figures_directory)
     for gamma_1 in gamma_1_list:
@@ -421,15 +421,13 @@ if __name__ == '__main__':
     epochs = 20000
     directory = os.getcwd()
 
-    run_3layer_accuracy_plots(pde=pde,
+    run_2layer_accuracy_plots(pde=pde,
                               epochs=epochs,
                               acc=acc,
                               gamma_1_list = gamma_1_list,
                               gamma_2_list = gamma_2_list,
-                              gamma_3_list=gamma_3_list,
                               hidden_units_1 = hidden_units_1,
                               hidden_units_2 = hidden_units_2,
-                              hidden_units_3 = hidden_units_3,
                               directory=directory)
 
 
