@@ -23,11 +23,11 @@ class PoissonNet():
                  epochs,
                  optimizer
         ):
-        train_data = DataLoader(train_data, batch_size=1)
+        training_data = DataLoader(train_data, batch_size=1)
         res = pd.DataFrame(None, columns=['Training Loss'], dtype=float)
         self.model.train()
         for e in range(epochs):
-            for batch in train_data:
+            for batch in training_data:
                 optimizer.zero_grad()
                 u = self.model(batch)
                 loss_pde = PoissonPDE(batch, u, self.device)

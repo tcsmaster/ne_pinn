@@ -104,6 +104,7 @@ def BurgersPDE(x, u, device):
                                 outputs=u,
                                 grad_outputs=torch.ones_like(u, device=device),
                                 create_graph=True,
+                                retain_graph=True
             )[0]
     du_dt = du_dX[:,1:2]
     du_dx = du_dX[:,0:1]

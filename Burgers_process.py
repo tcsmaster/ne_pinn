@@ -1,8 +1,9 @@
 import os
 from numpy import pi
 import pandas as pd
-from torch.optim import LBFGS, Adam
+from torch.optim import Adam, SGD
 from models import *
+from torch.utils.data import Dataset, DataLoader
 from pdes import BurgersPDE
 from utils import *
 
@@ -14,63 +15,44 @@ class BurgersNet():
         self.model=model.to(self.device)
     
     def training(self,
-                 X_int_train,
+                 train_data,
                  X_bc_train,
                  X_ic_train,
                  y_bc_train,
                  y_ic_train,
                  adam_epochs,
-                 lbfgs_epochs
+                 optimizer
         ):
+        training_data = DataLoader(train_data, batch_size=1)
         res = pd.DataFrame(None, columns = ["Training Loss"], dtype=float)
-        optimizer = Adam(self.model.parameters(), amsgrad=True)
         self.model.train()
         for e in range(adam_epochs):
-            optimizer.zero_grad()
-            u = self.model(X_int_train)
-            loss_pde = BurgersPDE(X_int_train, u, self.device)
-            y_bc_pred = self.model(X_bc_train)
-            loss_bc = torch.nn.MSELoss()(y_bc_pred, y_bc_train)
-            y_ic_pred = self.model(X_ic_train)
-            loss_ic = torch.nn.MSELoss()(y_ic_pred, y_ic_train)
-            loss = loss_pde + loss_bc + loss_ic
-            #loss = torch.nn.MSELoss()(u, torch.zeros_like(u))
-            loss.backward()
-            res.loc[e, "Training Loss"] = loss.item()
-            optimizer.step()
-        """
-        optimizer = LBFGS(self.model.parameters(), lr=0.01)
-        for e in range(lbfgs_epochs):
-          def closure():
-            if torch.is_grad_enabled():
-              optimizer.zero_grad(set_to_none=True)
-            u = self.model(X_int_train)
-            loss_pde = BurgersPDE(X_int_train, u, self.device)
-            y_bc_pred = self.model(X_bc_train)
-            loss_bc = torch.nn.MSELoss()(y_bc_pred, y_bc_train)
-            y_ic_pred = self.model(X_ic_train)
-            loss_ic = torch.nn.MSELoss()(y_ic_pred, y_ic_train)
-            loss = loss_pde + loss_bc + loss_ic
-            if loss.requires_grad:
+            for batch in training_data:
+                optimizer.zero_grad()
+                u = self.model(batch)
+                loss_pde = BurgersPDE(batch, u, self.device)
+                y_bc_pred = self.model(X_bc_train)
+                loss_bc = torch.nn.MSELoss()(y_bc_pred, y_bc_train)
+                y_ic_pred = self.model(X_ic_train)
+                loss_ic = torch.nn.MSELoss()(y_ic_pred, y_ic_train)
+                loss = loss_bc + loss_ic + loss_pde
+                loss = torch.nn.MSELoss()(u, torch.zeros_like(u))
                 loss.backward()
-            return loss
-          optimizer.step(closure=closure)
-
-          u = self.model(X_int_train)
-          loss_pde = BurgersPDE(X_int_train, u, self.device)
-          y_bc_pred = self.model(X_bc_train)
-          loss_bc = torch.nn.MSELoss()(y_bc_pred, y_bc_train)
-          y_ic_pred = self.model(X_ic_train)
-          loss_ic = torch.nn.MSELoss()(y_ic_pred, y_ic_train)
-          loss = loss_pde + loss_bc + loss_ic
-          print(loss.item())
-          wandb.log({"loss":loss.item()})
-          res.loc[e + adam_epochs, "Training Loss"] = loss.item()
-          """
+                optimizer.step()
+            res.loc[e, "Training Loss"] = loss.item()
         return res
 
 
+class train_loader(Dataset):
+    
+    def __init__(self, X):
+      self.X = X
 
+    def __len__(self):
+        return self.X.shape[0]
+    
+    def __getitem__(self, index):
+        return self.X[index, :]
 
 
 
@@ -80,7 +62,6 @@ def main(pde:str,
          hidden_units_1:int,
          hidden_units_2:int,
          adam_epochs:int,
-         lbfgs_epochs:int,
          directory,
          sampler=None,
          gamma_3 = None,
@@ -127,6 +108,12 @@ def main(pde:str,
                           ),
                           device=device
               )
+        learning_rate_fc1 = 1.0 / ((hidden_units_1 ** (1 - 2 * gamma_1)) * (hidden_units_2 ** (3 - 2 * gamma_2)))
+        learning_rate_fc2 = 1.0 / ((hidden_units_1 ** (1 - 2 * gamma_1)) * (hidden_units_2 ** (2 - 2 * gamma_2)))
+        learning_rate_fc3 = 1.0 / (hidden_units_2 ** (2 - 2 * gamma_2))
+        optimizer = SGD([{"params": net.model.fc1.parameters(), "lr": learning_rate_fc1},
+                              {"params": net.model.fc2.parameters(), "lr": learning_rate_fc2},
+                              {"params": net.model.fc3.parameters(), "lr": learning_rate_fc3}], lr = 1.0)
     else:
         net = BurgersNet(MLP3(num_input=2,
                               num_output=1,
@@ -143,11 +130,11 @@ def main(pde:str,
     print(f"Model: {net.model}")
 
     if not sampler:
-        h = 0.05
+        h = 0.1
         x = torch.arange(-1, 1 + h, h, device=device,requires_grad=True)
         t = torch.arange(0, 1 + h, h, device=device, requires_grad=True)
         X_int_train = torch.stack(torch.meshgrid(x[1:-2], t[1:-2], indexing='ij')).reshape(2, -1).T
-
+        train_data = train_loader(X_int_train)
         bc1 = torch.stack(torch.meshgrid(x[0],
                                              t,
                                              indexing='ij')).reshape(2, -1).T
@@ -162,18 +149,18 @@ def main(pde:str,
                                                 t[0],
                                                 indexing='ij')).reshape(2, -1).T      
         y_ic_train = -torch.sin(np.pi * X_ic_train[:, 0]).unsqueeze(1)
-        results = net.training(X_int_train=X_int_train,
+        results = net.training(train_data = train_data,
                                X_bc_train=X_bc_train,
                                X_ic_train=X_ic_train,
                                y_bc_train=y_bc_train,
                                y_ic_train=y_ic_train,
                                adam_epochs=adam_epochs,
-                               lbfgs_epochs=lbfgs_epochs
+                               optimizer=optimizer
                   )
 
         if not gamma_3:
             file_name = generate_file_name(pde=pde,
-                                           epochs=adam_epochs + lbfgs_epochs,
+                                           epochs=adam_epochs,
                                            hidden_units_1=hidden_units_1,
                                            hidden_units_2=hidden_units_2,
                                            gamma_1=gamma_1,
@@ -183,7 +170,7 @@ def main(pde:str,
             results_directory = os.path.join(directory, place)
         else:
             file_name = generate_file_name(pde=pde,
-                                           epochs=adam_epochs + lbfgs_epochs,
+                                           epochs=adam_epochs,
                                            hidden_units_1=hidden_units_1,
                                            hidden_units_2=hidden_units_2,
                                            gamma_1=gamma_1,
@@ -264,27 +251,22 @@ def main(pde:str,
 
 if __name__ == '__main__':
     pde='Burgers'
-    gamma_1_list = [0.5, 0.7, 1.0]
-    gamma_2_list = [0.5, 0.7, 1.0]
+    gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9]
+    gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9]
     gamma_3_list = [0.5, 0.7, 1.0]
     hidden_units_1=100
     hidden_units_2=100
     hidden_units_3=100
-    adam_epochs = 20000
-    lbfgs_epochs=0
+    adam_epochs = 1000
     sampler_list = ['random', 'LHS', 'Sobol', 'Halton']
     directory=os.getcwd()
     for gamma_1 in gamma_1_list:
         for gamma_2 in gamma_2_list:
-            for gamma_3 in gamma_3_list:
                 main(pde=pde,
                      gamma_1=gamma_1,
                      gamma_2=gamma_2,
                      hidden_units_1=hidden_units_1,
                      hidden_units_2=hidden_units_2,
                      adam_epochs=adam_epochs,
-                     lbfgs_epochs=lbfgs_epochs,
-                     directory=directory,
-                     gamma_3 = gamma_3,
-                     hidden_units_3 = hidden_units_3
+                     directory=directory
                 )
