@@ -12,11 +12,11 @@ def rmse_vec_error(pred, target):
 
 pde = "Poisson"
 device = torch.device("cpu")
-gamma_1_list = [0.5, 0.7, 1.0]
-gamma_2_list = [0.5, 0.7, 1.0]
+gamma_1_list = [0.5, 0.7, 0.9]
+gamma_2_list = [0.5, 0.7, 0.9]
 hidden_units_1 = 100
 hidden_units_2 = 100
-epochs=20000
+epochs=4000
 
 rmse_error = np.zeros((3, 3), dtype=object)
 rel_l2_error = np.zeros((3, 3), dtype=object)
@@ -27,7 +27,7 @@ for gamma_1 in gamma_1_list:
     true_sol = torch.sin(np.pi*test_data).detach().numpy()
     for gamma_2 in gamma_2_list:
         net = PoissonNet(MLP2(num_input=1, num_output=1, hidden_units_1=hidden_units_1, hidden_units_2 = hidden_units_2, gamma_1 = gamma_1, gamma_2 = gamma_2), device=device)
-        path = os.getcwd()+ f"/results/{pde}/2layer/normalized/Adam_with_amsgrad/loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}_model.pth"
+        path = os.getcwd()+ f"/results/{pde}/2layer/normalized/loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}_model.pth"
         net.model.load_state_dict(torch.load(path,map_location='cpu'))
         net.model.eval()
         with torch.no_grad():
@@ -41,6 +41,12 @@ for gamma_1 in gamma_1_list:
     ax.grid()
     ax.set_title(f"Prediction for $\gamma_1 = {{{gamma_1}}}$")
     file_name = f"plot_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}"
-    plt.savefig("/content/thesis/figures_test/Poisson_test/2layer/" + file_name + ".jpg")
-pd.DataFrame(rmse_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 1.0"], columns=["gamma_1 = 0.5", "gamma_1 = 0.7", "gamma_1 = 1.0"]).to_csv("/content/thesis/Error_tables/Poisson/rmse_table.csv")
-pd.DataFrame(rel_l2_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 1.0"], columns=["gamma_1 = 0.5", "gamma_1 = 0.7", "gamma_1 = 1.0"]).to_csv("/content/thesis/Error_tables/Poisson/rel_l2_table.csv")
+    fig_dir= "/content/thesis/figures_test/Poisson_test/2layer/"
+    if not os.path.isdir(fig_dir):
+        os.makedirs(fig_dir)
+    plt.savefig(fig_dir + file_name + ".jpg")
+error_dir= "/content/thesis/Error_tables/Poisson/"
+if not os.path.isdir(error_dir):
+        os.makedirs(error_dir)
+pd.DataFrame(rmse_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 0.9"], columns=["gamma_1 = 0.5", "gamma_1 = 0.7", "gamma_1 = 0.9"]).to_csv("rmse_table.csv")
+pd.DataFrame(rel_l2_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 0.9"], columns=["gamma_1 = 0.5", "gamma_1 = 0.7", "gamma_1 = 0.9"]).to_csv("/content/thesis/Error_tables/Poisson/rel_l2_table.csv")

@@ -35,7 +35,7 @@ def load_accuracy_for_single_gamma(pde:str,
                                    gamma_1=gamma_1,
                                    gamma_2=gamma_2
         )
-            results_folder = f'results/{pde}/2layer/normalized/Adam_with_amsgrad/'
+            results_folder = f'results/{pde}/2layer/normalized/'
         else:
             fname = generate_file_name(pde=pde,
                                    epochs=epochs,
@@ -45,7 +45,7 @@ def load_accuracy_for_single_gamma(pde:str,
                                    gamma_2=gamma_2,
                                    hidden_units_3=hidden_units_3,
                                    gamma_3=gamma_3)
-            results_folder = f'results/{pde}/3layer/normalized/Adam_with_amsgrad/'
+            results_folder = f'results/{pde}/3layer/normalized/'
     else:
         if not gamma_3:
             fname = generate_file_name(pde=pde,
@@ -410,26 +410,24 @@ def run_2layer_accuracy_plots_multiple_hidden_units(pde,
     return
 
 if __name__ == '__main__':
-    pde = "Burgers"
+    pde = "Poisson"
     acc = "Training Loss"
-    gamma_1_list = [0.5, 0.7, 1.0]
-    gamma_2_list = [0.5, 0.7, 1.0]
+    gamma_1_list = [0.5, 0.7, 0.9]
+    gamma_2_list = [0.5, 0.7, 0.9]
     gamma_3_list = [0.5, 0.7, 1.0]
     hidden_units_1 = 100
     hidden_units_2 = 100
     hidden_units_3 = 100
-    epochs = 20000
+    epochs = 4000
     directory = os.getcwd()
 
-    run_3layer_accuracy_plots(pde=pde,
+    run_2layer_accuracy_plots(pde=pde,
                               epochs=epochs,
                               acc=acc,
                               gamma_1_list = gamma_1_list,
                               gamma_2_list = gamma_2_list,
-                              gamma_3_list = gamma_3_list,
                               hidden_units_1 = hidden_units_1,
                               hidden_units_2 = hidden_units_2,
-                              hidden_units_3 = hidden_units_3,
                               directory=directory)
 
 

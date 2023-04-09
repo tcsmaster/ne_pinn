@@ -1,8 +1,9 @@
 import os
 from numpy import pi
 import pandas as pd
-from torch.optim import LBFGS, Adam
+from torch.optim import LBFGS, Adam, SGD
 from models import *
+from torch.utils.data import Dataset, DataLoader
 from pdes import PoissonPDE
 from utils import *
 
@@ -16,27 +17,38 @@ class PoissonNet():
  
     
     def training(self,
-                 X_int_train,
+                 train_data,
                  X_bc_train,
                  y_bc_train,
-                 epochs
+                 epochs,
+                 optimizer
         ):
+        train_data = DataLoader(train_data, batch_size=1)
         res = pd.DataFrame(None, columns=['Training Loss'], dtype=float)
-        optimizer = Adam(self.model.parameters())
         self.model.train()
         for e in range(epochs):
-            optimizer.zero_grad()
-            u = self.model(X_int_train)
-            loss_pde = PoissonPDE(X_int_train, u, self.device)
-            y_bc_pred = self.model(X_bc_train)
-            loss_bc = torch.nn.MSELoss()(y_bc_pred, y_bc_train)               
-            loss = loss_pde + loss_bc
-            loss.backward()
-            optimizer.step()
+            for batch in train_data:
+                optimizer.zero_grad()
+                u = self.model(batch)
+                loss_pde = PoissonPDE(batch, u, self.device)
+                y_bc_pred = self.model(X_bc_train)
+                loss_bc = torch.nn.MSELoss()(y_bc_pred, y_bc_train)               
+                loss = loss_pde + loss_bc
+                loss.backward()
+                optimizer.step()
             res.loc[e, 'Training Loss'] = loss.item()
         return res
 
+class train_loader(Dataset):
+    
+    def __init__(self, X):
+      self.X = X
 
+    def __len__(self):
+        return self.X.shape[0]
+    
+    def __getitem__(self, index):
+        return self.X[index, :]
 
 def main(pde,
          gamma_1,
@@ -90,6 +102,12 @@ def main(pde,
                          ),
                          device=device
               )
+        learning_rate_fc1 = 1.0 / ((hidden_units_1 ** (1 - 2 * gamma_1)) * (hidden_units_2 ** (3 - 2 * gamma_2)))
+        learning_rate_fc2 = 1.0 / ((hidden_units_1 ** (1 - 2 * gamma_1)) * (hidden_units_2 ** (2 - 2 * gamma_2)))
+        learning_rate_fc3 = 1.0 / (hidden_units_2 ** (2 - 2 * gamma_2))
+        optimizer = SGD([{"params": net.model.fc1.parameters(), "lr": learning_rate_fc1},
+                              {"params": net.model.fc2.parameters(), "lr": learning_rate_fc2},
+                              {"params": net.model.fc3.parameters(), "lr": learning_rate_fc3}], lr = 1.0)
     else:
         net = PoissonNet(MLP3(num_input=1,
                               num_output=1,
@@ -103,10 +121,18 @@ def main(pde,
                          ),
                          device=device
               )
+        learning_rate_fc1 = 1.0 / ((hidden_units_1 ** (1 - 2 * gamma_1)) * (hidden_units_2 ** (2 - 2 * gamma_2)) * (hidden_units_3**(3 - 2 * gamma_3)))
+        learning_rate_fc2 = 1.0 / ((hidden_units_1 ** (1 - 2 * gamma_1)) * (hidden_units_2 ** (1 - 2 * gamma_2)) * (hidden_units_3**(3 - 2 * gamma_3)))
+        learning_rate_fc3 = 1.0 / ((hidden_units_2 ** (1 - 2 * gamma_2)) * (hidden_units_3 ** (2 - 2 * gamma_3)))
+        learning_rate_fc4 = 1.0 / (hidden_units_3 ** (2 - 2 * gamma_3))
+        optimizer = optim.SGD([{"params": model.fc1.parameters(), "lr": learning_rate_fc1},
+                              {"params": model.fc2.parameters(), "lr": learning_rate_fc2},
+                              {"params": model.fc3.parameters(), "lr": learning_rate_fc3},
+                              {"params": model.fc4.parameters(), "lr": learning_rate_fc4}], lr = 1.0)
     print(f"Model: {net.model}")
     
     X_int_train = torch.arange(-0.9, 1., 0.1, device=device, requires_grad=True).reshape(1, -1).T
-
+    train_data = train_loader(X_int_train)
     bc1 = torch.tensor([-1.], device=device, requires_grad=True)
     bc2 = torch.tensor([1.], device=device, requires_grad=True)
     X_bc_train = torch.cat([bc1, bc2]).unsqueeze(1)
@@ -114,10 +140,11 @@ def main(pde,
     y_bc1 = torch.zeros(len(bc1), device=device, requires_grad=True)
     y_bc2 = torch.zeros(len(bc2), device=device, requires_grad=True)
     y_bc_train = torch.cat([y_bc1, y_bc2]).unsqueeze(1)
-    results = net.training(X_int_train = X_int_train,
+    results = net.training(train_data = train_data,
                            X_bc_train=X_bc_train,
                            y_bc_train = y_bc_train,
-                           epochs = adam_epochs
+                           epochs = adam_epochs,
+                           optimizer=optimizer
               )
 
 
@@ -153,13 +180,13 @@ def main(pde,
 
 if __name__ == '__main__':
     pde='Poisson'
-    gamma_1_list = [0.5,0.7,1.0]
-    gamma_2_list = [0.5,0.7,1.0]
-    gamma_3_list = [0.5,0.7,1.0]
+    gamma_1_list = [0.5,0.7, 0.9]
+    gamma_2_list = [0.5,0.7, 0.9]
+    gamma_3_list = [0.5,0.7,0.9]
     hidden_units_1=100
     hidden_units_2=100
     hidden_units_3=100
-    adam_epochs=2000
+    adam_epochs=4000
     directory=os.getcwd()
     #sampler_list = ['random', 'Halton', 'LHS', 'Sobol']
     for gamma_1 in gamma_1_list:
