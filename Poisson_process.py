@@ -8,7 +8,7 @@ from utils import *
 
 class PoissonNet():
     """
-    This class is a blueprint for solving a 1D Heat equation with Dirichlet BC
+    This class is a blueprint for solving a 1D Poisson equation with Dirichlet BC
     """
     def __init__(self, model, device):
         self.device=device
@@ -21,19 +21,19 @@ class PoissonNet():
                  y_bc_train,
                  epochs
         ):
-        res = pd.DataFrame(None, columns=['Training Loss', 'Test Loss'], dtype=float)
+        res = pd.DataFrame(None, columns=['Training Loss'], dtype=float)
         optimizer = Adam(self.model.parameters())
+        self.model.train()
         for e in range(epochs):
-            self.model.train()
-            self.optimizer.zero_grad()
+            optimizer.zero_grad()
             u = self.model(X_int_train)
             loss_pde = PoissonPDE(X_int_train, u, self.device)
             y_bc_pred = self.model(X_bc_train)
             loss_bc = torch.nn.MSELoss()(y_bc_pred, y_bc_train)               
             loss = loss_pde + loss_bc
-            res.loc[e, 'Training Loss'] = loss.item()
             loss.backward()
             optimizer.step()
+            res.loc[e, 'Training Loss'] = loss.item()
         return res
 
 
@@ -107,8 +107,8 @@ def main(pde,
     
     X_int_train = torch.arange(-0.9, 1., 0.1, device=device, requires_grad=True).reshape(1, -1).T
 
-    bc1 = torch.Tensor([-1.], device=device, requires_grad=True)
-    bc2 = torch.Tensor([1.], device=device, requires_grad=True)
+    bc1 = torch.tensor([-1.], device=device, requires_grad=True)
+    bc2 = torch.tensor([1.], device=device, requires_grad=True)
     X_bc_train = torch.cat([bc1, bc2]).unsqueeze(1)
 
     y_bc1 = torch.zeros(len(bc1), device=device, requires_grad=True)
@@ -159,7 +159,7 @@ if __name__ == '__main__':
     hidden_units_1=100
     hidden_units_2=100
     hidden_units_3=100
-    adam_epochs=20000
+    adam_epochs=2000
     directory=os.getcwd()
     #sampler_list = ['random', 'Halton', 'LHS', 'Sobol']
     for gamma_1 in gamma_1_list:
@@ -169,6 +169,6 @@ if __name__ == '__main__':
              gamma_2=gamma_2,
              hidden_units_1=hidden_units_1,
              hidden_units_2=hidden_units_2,
-             epochs=adam_epochs,
+             adam_epochs=adam_epochs,
              directory=directory
         )

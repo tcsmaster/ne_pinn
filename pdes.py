@@ -125,5 +125,6 @@ def PoissonPDE(x, u, device):
                                  outputs=du_dx,
                                  grad_outputs=torch.ones_like(du_dx).to(device),
                                  retain_graph=True
-             )[0][:, 0]
-    loss_pde = MSELoss()(-du_dxx, (pi**2)*torch.sin(pi*x.squeeze()))
+             )[0][:, 0:1]
+    loss = MSELoss()(-du_dxx, (pi**2)*torch.sin(pi*x))
+    return loss
