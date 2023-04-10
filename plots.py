@@ -178,7 +178,7 @@ def run_2layer_accuracy_plots(pde,
                              hidden_units_1=hidden_units_1,
                              hidden_units_2=hidden_units_2,
                              directory=directory)
-    figures_directory = os.path.join(directory, f"figures/{pde}/2layer/Adam_with_amsgrad/")
+    figures_directory = os.path.join(directory, f"figures/{pde}/2layer/normalized/")
     if not os.path.isdir(figures_directory):
         os.makedirs(figures_directory)
     for gamma_1 in gamma_1_list:
@@ -260,7 +260,7 @@ def run_3layer_accuracy_plots(pde,
     
     line_styles = ['solid', 'dashed', 'dotted']
     colors = ['blue', 'green', 'orange']
-    figures_directory = os.path.join(directory, f'figures/{pde}/3layer/normalized/Adam_with_amsgrad/')
+    figures_directory = os.path.join(directory, f'figures/{pde}/3layer/normalized/')
     if not os.path.isdir(figures_directory):
         os.makedirs(figures_directory)
     for gamma_1 in gamma_1_list:
@@ -405,7 +405,6 @@ def run_2layer_accuracy_plots_multiple_hidden_units(pde,
     
     
     ax.figure.savefig(fig_path + '.jpg', dpi=300, bbox_inches='tight')
-    #ax.figure.savefig(fig_path + '.pdf', dpi=300, bbox_inches='tight')
     plt.close('all')
     return
 
@@ -414,11 +413,11 @@ if __name__ == '__main__':
     acc = "Training Loss"
     gamma_1_list = [0.5, 0.7, 0.9]
     gamma_2_list = [0.5, 0.7, 0.9]
-    gamma_3_list = [0.5, 0.7, 1.0]
+    gamma_3_list = [0.5, 0.7, 0.9]
     hidden_units_1 = 100
     hidden_units_2 = 100
     hidden_units_3 = 100
-    epochs = 4000
+    epochs = 800
     directory = os.getcwd()
 
     run_2layer_accuracy_plots(pde=pde,

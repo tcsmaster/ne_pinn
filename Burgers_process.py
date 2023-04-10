@@ -3,6 +3,7 @@ from numpy import pi
 import pandas as pd
 from torch.optim import Adam, SGD
 from models import *
+from torch.nn import MSELoss
 from torch.utils.data import Dataset, DataLoader
 from pdes import BurgersPDE
 from utils import *
@@ -16,14 +17,14 @@ class BurgersNet():
     
     def training(self,
                  train_data,
-                 X_bc_train,
-                 X_ic_train,
-                 y_bc_train,
-                 y_ic_train,
+                 boundary_data,
+                 init_data,
                  adam_epochs,
                  optimizer
         ):
         training_data = DataLoader(train_data, batch_size=1)
+        bc_data = DataLoader(boundary_data, batch_size=1)
+        ic_data = DataLoader(init_data, batch_size=1)
         res = pd.DataFrame(None, columns = ["Training Loss"], dtype=float)
         self.model.train()
         for e in range(adam_epochs):
@@ -31,13 +32,19 @@ class BurgersNet():
                 optimizer.zero_grad()
                 u = self.model(batch)
                 loss_pde = BurgersPDE(batch, u, self.device)
-                y_bc_pred = self.model(X_bc_train)
-                loss_bc = torch.nn.MSELoss()(y_bc_pred, y_bc_train)
-                y_ic_pred = self.model(X_ic_train)
-                loss_ic = torch.nn.MSELoss()(y_ic_pred, y_ic_train)
-                loss = loss_bc + loss_ic + loss_pde
-                loss = torch.nn.MSELoss()(u, torch.zeros_like(u))
+                loss_pde.backward()
+                optimizer.step()
+            for x, y in bc_data:
+                optimizer.zero_grad()
+                pred = self.model(x)
+                loss = MSELoss()(pred, y)
                 loss.backward()
+                optimizer.step()
+            for x, y in ic_data:
+                optimizer.zero_grad()
+                pred = self.model(x)
+                loss = MSELoss()(pred, y)
+                loss.backward(retain_graph=True)
                 optimizer.step()
             res.loc[e, "Training Loss"] = loss.item()
         return res
@@ -54,6 +61,18 @@ class train_loader(Dataset):
     def __getitem__(self, index):
         return self.X[index, :]
 
+
+class bc_loader(Dataset):
+    
+    def __init__(self, X, y):
+      self.X = X
+      self.y = y
+
+    def __len__(self):
+        return self.X.shape[0]
+    
+    def __getitem__(self, index):
+        return self.X[index, :], self.y[index, :]
 
 
 def main(pde:str,
@@ -130,7 +149,7 @@ def main(pde:str,
     print(f"Model: {net.model}")
 
     if not sampler:
-        h = 0.1
+        h = 0.05
         x = torch.arange(-1, 1 + h, h, device=device,requires_grad=True)
         t = torch.arange(0, 1 + h, h, device=device, requires_grad=True)
         X_int_train = torch.stack(torch.meshgrid(x[1:-2], t[1:-2], indexing='ij')).reshape(2, -1).T
@@ -145,15 +164,15 @@ def main(pde:str,
         y_bc1 = torch.zeros(len(bc1), device=device)
         y_bc2 = torch.zeros(len(bc2), device=device)
         y_bc_train = torch.cat([y_bc1, y_bc2]).unsqueeze(1)
+        boundary_data = bc_loader(X_bc_train, y_bc_train)
         X_ic_train = torch.stack(torch.meshgrid(x,
                                                 t[0],
                                                 indexing='ij')).reshape(2, -1).T      
         y_ic_train = -torch.sin(np.pi * X_ic_train[:, 0]).unsqueeze(1)
+        init_data = bc_loader(X_ic_train, y_ic_train)
         results = net.training(train_data = train_data,
-                               X_bc_train=X_bc_train,
-                               X_ic_train=X_ic_train,
-                               y_bc_train=y_bc_train,
-                               y_ic_train=y_ic_train,
+                               boundary_data = boundary_data,
+                               init_data = init_data,
                                adam_epochs=adam_epochs,
                                optimizer=optimizer
                   )
@@ -251,18 +270,18 @@ def main(pde:str,
 
 if __name__ == '__main__':
     pde='Burgers'
-    gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9]
-    gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9]
+    gamma_1_list = [0.5,0.7,0.9]
+    gamma_2_list = [0.5,0.7,0.9]
     gamma_3_list = [0.5, 0.7, 1.0]
     hidden_units_1=100
     hidden_units_2=100
     hidden_units_3=100
-    adam_epochs = 1000
+    adam_epochs = 500
     sampler_list = ['random', 'LHS', 'Sobol', 'Halton']
     directory=os.getcwd()
     for gamma_1 in gamma_1_list:
         for gamma_2 in gamma_2_list:
-                main(pde=pde,
+            main(pde=pde,
                      gamma_1=gamma_1,
                      gamma_2=gamma_2,
                      hidden_units_1=hidden_units_1,

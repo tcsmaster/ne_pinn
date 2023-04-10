@@ -2,6 +2,7 @@ import os
 from numpy import pi
 import pandas as pd
 from torch.optim import LBFGS, Adam, SGD
+from torch.nn import MSELoss
 from models import *
 from torch.utils.data import Dataset, DataLoader
 from pdes import PoissonPDE
@@ -18,25 +19,28 @@ class PoissonNet():
     
     def training(self,
                  train_data,
-                 X_bc_train,
-                 y_bc_train,
-                 epochs,
+                 boundary_data,
+                 adam_epochs,
                  optimizer
         ):
         training_data = DataLoader(train_data, batch_size=1)
-        res = pd.DataFrame(None, columns=['Training Loss'], dtype=float)
+        bc_data = DataLoader(boundary_data, batch_size=1)
+        res = pd.DataFrame(None, columns = ["Training Loss"], dtype=float)
         self.model.train()
-        for e in range(epochs):
+        for e in range(adam_epochs):
             for batch in training_data:
                 optimizer.zero_grad()
                 u = self.model(batch)
                 loss_pde = PoissonPDE(batch, u, self.device)
-                y_bc_pred = self.model(X_bc_train)
-                loss_bc = torch.nn.MSELoss()(y_bc_pred, y_bc_train)               
-                loss = loss_pde + loss_bc
+                loss_pde.backward()
+                optimizer.step()
+            for x, y in bc_data:
+                optimizer.zero_grad()
+                pred = self.model(x)
+                loss = MSELoss()(pred, y)
                 loss.backward()
                 optimizer.step()
-            res.loc[e, 'Training Loss'] = loss.item()
+            res.loc[e, "Training Loss"] = loss.item()
         return res
 
 class train_loader(Dataset):
@@ -49,6 +53,18 @@ class train_loader(Dataset):
     
     def __getitem__(self, index):
         return self.X[index, :]
+
+class bc_loader(Dataset):
+    
+    def __init__(self, X, y):
+      self.X = X
+      self.y = y
+
+    def __len__(self):
+        return self.X.shape[0]
+    
+    def __getitem__(self, index):
+        return self.X[index, :], self.y[index, :]
 
 def main(pde,
          gamma_1,
@@ -97,8 +113,7 @@ def main(pde,
                               hidden_units_1=hidden_units_1,
                               hidden_units_2=hidden_units_2,
                               gamma_1=gamma_1,
-                              gamma_2=gamma_2,
-                              sampler=sampler
+                              gamma_2=gamma_2
                          ),
                          device=device
               )
@@ -125,7 +140,7 @@ def main(pde,
         learning_rate_fc2 = 1.0 / ((hidden_units_1 ** (1 - 2 * gamma_1)) * (hidden_units_2 ** (1 - 2 * gamma_2)) * (hidden_units_3**(3 - 2 * gamma_3)))
         learning_rate_fc3 = 1.0 / ((hidden_units_2 ** (1 - 2 * gamma_2)) * (hidden_units_3 ** (2 - 2 * gamma_3)))
         learning_rate_fc4 = 1.0 / (hidden_units_3 ** (2 - 2 * gamma_3))
-        optimizer = optim.SGD([{"params": model.fc1.parameters(), "lr": learning_rate_fc1},
+        optimizer = SGD([{"params": model.fc1.parameters(), "lr": learning_rate_fc1},
                               {"params": model.fc2.parameters(), "lr": learning_rate_fc2},
                               {"params": model.fc3.parameters(), "lr": learning_rate_fc3},
                               {"params": model.fc4.parameters(), "lr": learning_rate_fc4}], lr = 1.0)
@@ -140,10 +155,10 @@ def main(pde,
     y_bc1 = torch.zeros(len(bc1), device=device, requires_grad=True)
     y_bc2 = torch.zeros(len(bc2), device=device, requires_grad=True)
     y_bc_train = torch.cat([y_bc1, y_bc2]).unsqueeze(1)
+    boundary_data = bc_loader(X_bc_train, y_bc_train)
     results = net.training(train_data = train_data,
-                           X_bc_train=X_bc_train,
-                           y_bc_train = y_bc_train,
-                           epochs = adam_epochs,
+                           boundary_data = boundary_data,
+                           adam_epochs = adam_epochs,
                            optimizer=optimizer
               )
 
@@ -186,7 +201,7 @@ if __name__ == '__main__':
     hidden_units_1=100
     hidden_units_2=100
     hidden_units_3=100
-    adam_epochs=4000
+    adam_epochs=1000
     directory=os.getcwd()
     #sampler_list = ['random', 'Halton', 'LHS', 'Sobol']
     for gamma_1 in gamma_1_list:
