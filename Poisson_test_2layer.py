@@ -12,14 +12,14 @@ def rmse_vec_error(pred, target):
 
 pde = "Poisson"
 device = torch.device("cpu")
-gamma_1_list = [0.5, 0.7, 0.9]
-gamma_2_list = [0.5, 0.7, 0.9]
+gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9]
+gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9]
 hidden_units_1 = 100
 hidden_units_2 = 100
-epochs=4000
+epochs=2000
 
-rmse_error = np.zeros((3, 3), dtype=object)
-rel_l2_error = np.zeros((3, 3), dtype=object)
+rmse_error = np.zeros((5, 5), dtype=object)
+rel_l2_error = np.zeros((5, 5), dtype=object)
 for gamma_1 in gamma_1_list:
     fig= plt.figure(figsize=(20, 10), dpi=300)
     ax = fig.add_subplot(1,1,1)
@@ -45,8 +45,8 @@ for gamma_1 in gamma_1_list:
     if not os.path.isdir(fig_dir):
         os.makedirs(fig_dir)
     plt.savefig(fig_dir + file_name + ".jpg")
-error_dir= "/content/thesis/Error_tables/Poisson/"
-if not os.path.isdir(error_dir):
-        os.makedirs(error_dir)
-pd.DataFrame(rmse_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 0.9"], columns=["gamma_1 = 0.5", "gamma_1 = 0.7", "gamma_1 = 0.9"]).to_csv("rmse_table.csv")
-pd.DataFrame(rel_l2_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 0.9"], columns=["gamma_1 = 0.5", "gamma_1 = 0.7", "gamma_1 = 0.9"]).to_csv("/content/thesis/Error_tables/Poisson/rel_l2_table.csv")
+err_dir= "/content/thesis/Error_tables/Poisson/"
+if not os.path.isdir(err_dir):
+        os.makedirs(err_dir)
+pd.DataFrame(rmse_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.6","gamma_2 = 0.7", "gamma_2 = 0.8","gamma_2 = 0.9"], columns=["gamma_1 = 0.5", "gamma_2 = 0.6","gamma_1 = 0.7", "gamma_2 = 0.8","gamma_1 = 0.9"]).to_csv(err_dir + "rmse_table.csv")
+pd.DataFrame(rel_l2_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.6","gamma_2 = 0.7", "gamma_2 = 0.8","gamma_2 = 0.9"], columns=["gamma_1 = 0.5", "gamma_2 = 0.6","gamma_1 = 0.7","gamma_2 = 0.8", "gamma_1 = 0.9"]).to_csv(err_dir + "rel_l2_table.csv")

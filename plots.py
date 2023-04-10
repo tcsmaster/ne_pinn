@@ -411,13 +411,13 @@ def run_2layer_accuracy_plots_multiple_hidden_units(pde,
 if __name__ == '__main__':
     pde = "Poisson"
     acc = "Training Loss"
-    gamma_1_list = [0.5, 0.7, 0.9]
-    gamma_2_list = [0.5, 0.7, 0.9]
+    gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9]
+    gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9]
     gamma_3_list = [0.5, 0.7, 0.9]
     hidden_units_1 = 100
     hidden_units_2 = 100
     hidden_units_3 = 100
-    epochs = 800
+    epochs = 2000
     directory = os.getcwd()
 
     run_2layer_accuracy_plots(pde=pde,

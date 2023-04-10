@@ -41,6 +41,7 @@ class PoissonNet():
                 loss.backward()
                 optimizer.step()
             res.loc[e, "Training Loss"] = loss.item()
+            print(loss.item())
         return res
 
 class train_loader(Dataset):
@@ -195,13 +196,13 @@ def main(pde,
 
 if __name__ == '__main__':
     pde='Poisson'
-    gamma_1_list = [0.5,0.7, 0.9]
-    gamma_2_list = [0.5,0.7, 0.9]
+    gamma_1_list = [0.5]
+    gamma_2_list = [0.9]
     gamma_3_list = [0.5,0.7,0.9]
     hidden_units_1=100
     hidden_units_2=100
     hidden_units_3=100
-    adam_epochs=1000
+    adam_epochs=2000
     directory=os.getcwd()
     #sampler_list = ['random', 'Halton', 'LHS', 'Sobol']
     for gamma_1 in gamma_1_list:
