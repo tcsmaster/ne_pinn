@@ -48,5 +48,5 @@ for gamma_1 in gamma_1_list:
 err_dir= "/content/thesis/Error_tables/Poisson/"
 if not os.path.isdir(err_dir):
         os.makedirs(err_dir)
-pd.DataFrame(rmse_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.6","gamma_2 = 0.7", "gamma_2 = 0.8","gamma_2 = 0.9"], columns=["gamma_1 = 0.5", "gamma_2 = 0.6","gamma_1 = 0.7", "gamma_2 = 0.8","gamma_1 = 0.9"]).to_csv(err_dir + "rmse_table.csv")
-pd.DataFrame(rel_l2_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.6","gamma_2 = 0.7", "gamma_2 = 0.8","gamma_2 = 0.9"], columns=["gamma_1 = 0.5", "gamma_2 = 0.6","gamma_1 = 0.7","gamma_2 = 0.8", "gamma_1 = 0.9"]).to_csv(err_dir + "rel_l2_table.csv")
+pd.DataFrame(rmse_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.6","gamma_2 = 0.7", "gamma_2 = 0.8","gamma_2 = 0.9"], columns=["gamma_1 = 0.5", "gamma_2 = 0.6","gamma_1 = 0.7", "gamma_2 = 0.8","gamma_1 = 0.9"]).to_csv(err_dir + f"rmse_table_epochs_{epochs}.csv")
+pd.DataFrame(rel_l2_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.6","gamma_2 = 0.7", "gamma_2 = 0.8","gamma_2 = 0.9"], columns=["gamma_1 = 0.5", "gamma_2 = 0.6","gamma_1 = 0.7","gamma_2 = 0.8", "gamma_1 = 0.9"]).to_csv(err_dir + f"rel_l2_table_epochs_{epochs}.csv")
