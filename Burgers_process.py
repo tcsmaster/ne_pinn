@@ -270,13 +270,13 @@ def main(pde:str,
 
 if __name__ == '__main__':
     pde='Burgers'
-    gamma_1_list = [0.5,0.7,0.9]
-    gamma_2_list = [0.5,0.7,0.9]
+    gamma_1_list = [0.5,0.6, 0.7,0.8, 0.9]
+    gamma_2_list = [0.5,0.6, 0.7,0.8, 0.9]
     gamma_3_list = [0.5, 0.7, 1.0]
     hidden_units_1=100
     hidden_units_2=100
     hidden_units_3=100
-    adam_epochs = 500
+    adam_epochs = 1000
     sampler_list = ['random', 'LHS', 'Sobol', 'Halton']
     directory=os.getcwd()
     for gamma_1 in gamma_1_list:
