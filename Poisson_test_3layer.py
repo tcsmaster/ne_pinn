@@ -29,7 +29,16 @@ for el in itertools.product(gamma_2_list, gamma_3_list):
     test_data = torch.linspace(-1, 1, 30).reshape(1, -1).T
     true_sol = torch.sin(np.pi*test_data).detach().numpy()
     for gamma_1_ind, gamma_1 in enumerate(gamma_1_list):
-        net = PoissonNet(MLP3(num_input=1, num_output=1, hidden_units_1=hidden_units_1, hidden_units_2 = hidden_units_2, hidden_units_3 = hidden_units_3, gamma_1 = gamma_1, gamma_2 = el[0], gamma_3 = el[1]), device=device)
+        net = PoissonNet(MLP3(num_input=1,
+                              num_output=1,
+                              hidden_units_1=hidden_units_1,
+                              hidden_units_2 = hidden_units_2,
+                              hidden_units_3 = hidden_units_3,
+                              gamma_1 = gamma_1,
+                              gamma_2 = el[0],
+                              gamma_3 = el[1]
+                         ), device=device
+              )
         path = os.getcwd()+ f"/results/{pde}/3layer/normalized/loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_hidden3_{hidden_units_3}_gamma1_{gamma_1}_gamma2_{el[0]}_gamma3_{el[1]}_epochs_{epochs}_model.pth"
         net.model.load_state_dict(torch.load(path,map_location='cpu'))
         net.model.eval()

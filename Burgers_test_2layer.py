@@ -15,8 +15,8 @@ epochs=1000
 hidden_units_1 = 100
 hidden_units_2 = 100
 
-gamma_1_list = [0.5, 0.7, 0.9]
-gamma_2_list = [0.5, 0.7, 0.9]
+gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9]
+gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9]
 
 
 t_space = [0, 0.25, 0.5, 0.75]

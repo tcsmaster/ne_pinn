@@ -152,7 +152,7 @@ def main(pde:str,
         h = 0.05
         x = torch.arange(-1, 1 + h, h, device=device,requires_grad=True)
         t = torch.arange(0, 1 + h, h, device=device, requires_grad=True)
-        X_int_train = torch.stack(torch.meshgrid(x[1:-2], t[1:-2], indexing='ij')).reshape(2, -1).T
+        X_int_train = torch.stack(torch.meshgrid(x[1:-1], t[1:-1], indexing='ij')).reshape(2, -1).T
         train_data = train_loader(X_int_train)
         bc1 = torch.stack(torch.meshgrid(x[0],
                                              t,
@@ -270,7 +270,7 @@ def main(pde:str,
 
 if __name__ == '__main__':
     pde='Burgers'
-    gamma_1_list = [0.5,0.6, 0.7,0.8, 0.9]
+    gamma_1_list = [0.8, 0.9]
     gamma_2_list = [0.5,0.6, 0.7,0.8, 0.9]
     gamma_3_list = [0.5, 0.7, 1.0]
     hidden_units_1=100

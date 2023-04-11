@@ -26,7 +26,14 @@ for gamma_1 in gamma_1_list:
     test_data = torch.linspace(-1, 1, 30).reshape(1, -1).T
     true_sol = torch.sin(np.pi*test_data).detach().numpy()
     for gamma_2 in gamma_2_list:
-        net = PoissonNet(MLP2(num_input=1, num_output=1, hidden_units_1=hidden_units_1, hidden_units_2 = hidden_units_2, gamma_1 = gamma_1, gamma_2 = gamma_2), device=device)
+        net = PoissonNet(MLP2(num_input=1,
+                              num_output=1,
+                              hidden_units_1=hidden_units_1,
+                              hidden_units_2 = hidden_units_2,
+                              gamma_1 = gamma_1,
+                              gamma_2 = gamma_2
+                         ), device=device
+              )
         path = os.getcwd()+ f"/results/{pde}/2layer/normalized/loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}_model.pth"
         net.model.load_state_dict(torch.load(path,map_location='cpu'))
         net.model.eval()
@@ -45,7 +52,7 @@ for gamma_1 in gamma_1_list:
     if not os.path.isdir(fig_dir):
         os.makedirs(fig_dir)
     plt.savefig(fig_dir + file_name + ".jpg")
-err_dir= "/content/thesis/Error_tables/Poisson/"
+err_dir= "/content/thesis/Error_tables/{pde}/"
 if not os.path.isdir(err_dir):
         os.makedirs(err_dir)
 pd.DataFrame(rmse_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.6","gamma_2 = 0.7", "gamma_2 = 0.8","gamma_2 = 0.9"], columns=["gamma_1 = 0.5", "gamma_2 = 0.6","gamma_1 = 0.7", "gamma_2 = 0.8","gamma_1 = 0.9"]).to_csv(err_dir + f"rmse_table_epochs_{epochs}.csv")

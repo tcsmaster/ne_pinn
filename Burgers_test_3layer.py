@@ -13,13 +13,13 @@ def rmse_vec_error(pred, target):
     return np.linalg.norm(pred-target) / np.sqrt(len(pred))
 
 pde = "Burgers"
-epochs=20000
+epochs=2000
 hidden_units_1 = 100
 hidden_units_2 = 100
 hidden_units_3 = 100
-gamma_1_list = [0.5, 0.7, 1.0]
-gamma_2_list = [0.5, 0.7, 1.0]
-gamma_3_list = [0.5, 0.7, 1.0]
+gamma_1_list = [0.5, 0.7, 0.9]
+gamma_2_list = [0.5, 0.7, 0.9]
+gamma_3_list = [0.5, 0.7, 0.9]
 rmse_error = np.zeros((9, 12), dtype=object)
 rel_l2_error = np.zeros((9,12), dtype=object)
 
