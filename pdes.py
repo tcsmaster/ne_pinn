@@ -121,7 +121,8 @@ def PoissonPDE(x, u, device):
     du_dx = torch.autograd.grad(inputs=x,
                                 outputs=u,
                                 grad_outputs=torch.ones_like(u).to(device),
-                                create_graph=True
+                                create_graph=True,
+                                retain_graph=True
             )[0]
     du_dxx = torch.autograd.grad(inputs=x,
                                  outputs=du_dx,
