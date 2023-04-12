@@ -206,7 +206,7 @@ def main(pde:str,
                                            hidden_units_3=hidden_units_3,
                                            gamma_3=gamma_3
             )
-            place = f'results\\{pde}\\3layer\\normalized\\'
+            place = f'results/{pde}/3layer/normalized/'
             results_directory = os.path.join(directory, place)
         save_results(results=results,
                  directory=results_directory,
