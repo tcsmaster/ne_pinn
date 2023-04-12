@@ -29,7 +29,9 @@ class BurgersNet():
             for batch in training_data:
                 optimizer.zero_grad()
                 u = self.model(batch)
+                print(u.grad_fn, batch.grad_fn)
                 loss_pde = BurgersPDE(batch, u, self.device)
+                print(loss_pde)
                 loss_pde.backward()
                 optimizer.step()
             for x, y in bc_data:
@@ -204,7 +206,7 @@ def main(pde:str,
                                            hidden_units_3=hidden_units_3,
                                            gamma_3=gamma_3
             )
-            place = f'results/{pde}/3layer/normalized/'
+            place = f'results\\{pde}\\3layer\\normalized\\'
             results_directory = os.path.join(directory, place)
         save_results(results=results,
                  directory=results_directory,
@@ -218,13 +220,13 @@ def main(pde:str,
                                n_samples=8000,
                                sampler=sampler).to(device)
         X_int_train.requires_grad=True
-        bc1 = torch.stack(torch.meshgrid(torch.tensor([-1.], device=device,requires_grad=True),
-                                         data_gen(space=[torch.tensor([0., 1.], device=device,requires_grad=True)],
+        bc1 = torch.stack(torch.meshgrid(torch.tensor([-1.], device=device),
+                                         data_gen(space=[torch.tensor([0., 1.], device=device,)],
                                                   n_samples=100,
                                                   sampler=sampler).squeeze(),
                                          indexing='ij')).reshape(2, -1).T
-        bc2 = torch.stack(torch.meshgrid(torch.tensor([1.], device=device,requires_grad=True),
-                                         data_gen(space=[torch.tensor([0., 1.], device=device,requires_grad=True)],
+        bc2 = torch.stack(torch.meshgrid(torch.tensor([1.], device=device),
+                                         data_gen(space=[torch.tensor([0., 1.], device=device)],
                                                   n_samples=100,
                                                   sampler=sampler).squeeze(),
                                          indexing='ij')).reshape(2, -1).T
@@ -232,7 +234,7 @@ def main(pde:str,
         y_bc1 = torch.zeros(len(bc1))
         y_bc2 = torch.zeros(len(bc2))
         y_bc_train = torch.cat([y_bc1, y_bc2]).unsqueeze(1).to(device)
-        X_ic_train = torch.stack(torch.meshgrid(data_gen(space=[torch.tensor([-1.,1.], device=device,requires_grad=True)], n_samples=100, sampler=sampler).squeeze(), torch.tensor([0.]), indexing='ij')).reshape(2, -1).T.to(device)
+        X_ic_train = torch.stack(torch.meshgrid(data_gen(space=[torch.tensor([-1.,1.], device=device)], n_samples=100, sampler=sampler).squeeze(), torch.tensor([0.]), indexing='ij')).reshape(2, -1).T.to(device)
         y_ic_train = -torch.sin(np.pi*X_ic_train[:, 0]).unsqueeze(1)
 
         results = net.training(X_int_train=X_int_train,
@@ -240,8 +242,7 @@ def main(pde:str,
                                X_ic_train=X_ic_train,
                                y_bc_train=y_bc_train,
                                y_ic_train=y_ic_train,
-                               adam_epochs=adam_epochs,
-                               lbfgs_epochs=lbfgs_epochs)
+                               adam_epochs=adam_epochs)
 
     # Save accuracy results
         if not gamma_3:
@@ -277,8 +278,13 @@ def main(pde:str,
 
 if __name__ == '__main__':
     pde='Burgers'
+<<<<<<< HEAD
     gamma_1_list = [0.5, 0.7, 0.9]
     gamma_2_list = [0.5, 0.7,0.9]
+=======
+    gamma_1_list = [0.5,0.7, 0.9]
+    gamma_2_list = [0.5,0.7, 0.9]
+>>>>>>> f560b0f3cfca97e60bd2d91e1f356f0dbec3b506
     gamma_3_list = [0.5, 0.7, 0.9]
     hidden_units_1=100
     hidden_units_2=100
@@ -295,7 +301,11 @@ if __name__ == '__main__':
                      gamma_3 = gamma_3,
                      hidden_units_1=hidden_units_1,
                      hidden_units_2=hidden_units_2,
+<<<<<<< HEAD
                      hidden_units_3 = hidden_units_3,
+=======
+                     hidden_units_3=hidden_units_3,
+>>>>>>> f560b0f3cfca97e60bd2d91e1f356f0dbec3b506
                      adam_epochs=adam_epochs,
                      directory=directory
                 )
