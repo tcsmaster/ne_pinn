@@ -21,8 +21,8 @@ hidden_units_2 = 100
 hidden_units_3 = 100
 epochs=2000
 
-rmse_error = np.zeros((3, 3, 3), dtype=object)
-rel_l2_error = np.zeros((3, 3, 3), dtype=object)
+rmse_error = np.zeros((len(gamma_2_list), len(gamma_3_list), len(gamma_1_list)), dtype=object)
+rel_l2_error = np.zeros((len(gamma_2_list), len(gamma_3_list), len(gamma_1_list)), dtype=object)
 for el in itertools.product(gamma_2_list, gamma_3_list):
     fig= plt.figure(figsize=(20, 10), dpi=300)
     ax = fig.add_subplot(1,1,1)

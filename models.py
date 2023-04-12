@@ -124,47 +124,4 @@ class MLP3(nn.Module):
             x = self.fc4(x)
             if self.output_transform:
                 x = self.output_transform(inputs, x)
-            return x
-    
-
-class ReadyNet:
-    """
-    A blueprint to create a physics-informed neural network to solve a 1D Reaction-diffusion equation.    
-    """
-    def __init__(self, model, device):
-        self.device=device
-        self.model = model.to(self.device)
-        self.mseloss = torch.nn.MSELoss()
-        self.optimizer = torch.optim.Adam(self.model.parameters())
-
-
-    def training(self, X_int_train,X_bic_train, X_int_test, y_bic_train,y_int_test, epochs):
-        res = pd.DataFrame(None, index=range(epochs), columns=['Training Loss', 'Test Loss'], dtype=float)
-        for e in range(epochs):
-            self.model.train()
-
-            self.optimizer.zero_grad()
-            y_bic_pred = self.model(X_bic_train)
-            loss_data = self.mseloss(y_bic_pred, y_bic_train)
-
-            u = self.model(X_int_train)
-
-            du_dX = torch.autograd.grad(inputs=X_int_train, outputs=u, grad_outputs=torch.ones_like(u).to(self.device), retain_graph=True, create_graph=True)[0]
-            du_dt = du_dX[:, 1]
-            du_dxx = torch.autograd.grad(inputs=X_int_train, outputs=du_dX, grad_outputs=torch.ones_like(du_dX).to(self.device), retain_graph=True, create_graph=True)[0][:, 0]
-            # print(u.shape, du_dt.shape, du_dx.shape, du_dxx.shape)
-            loss_pde = self.mseloss(du_dt, du_dxx + 1.5*torch.sin(2*X_int_train[:, 1]))
-            
-            loss = loss_pde + loss_data
-            res.loc[e, 'Training Loss'] = loss.item()
-            loss.backward(retain_graph=True)
-            self.optimizer.step()
-     
-            self.model.eval() 
-            with torch.no_grad():
-                y_val_pred = self.model(X_int_test) #TODO: implement PDE-loss if needed
-                test_loss = self.mseloss(y_val_pred, y_int_test)
-                res.loc[e, 'Test Loss'] = test_loss.item()
-        return res
-
-   
+            return x 

@@ -8,8 +8,6 @@ from torch.utils.data import Dataset, DataLoader
 from pdes import BurgersPDE
 from utils import *
 
-def output_transform(x, y):
-    return x[:, 0:1]* (1 - torch.square(x[:, 1:2]))*y - torch.sin(pi*x[:, 1:2]) 
 class BurgersNet():
     def __init__(self, model, device):
         self.device = device
@@ -44,7 +42,7 @@ class BurgersNet():
                 optimizer.zero_grad()
                 pred = self.model(x)
                 loss = MSELoss()(pred, y)
-                loss.backward(retain_graph=True)
+                loss.backward()
                 optimizer.step()
             res.loc[e, "Training Loss"] = loss.item()
         return res
@@ -146,13 +144,22 @@ def main(pde:str,
                          ),
                          device=device
               )
+        learning_rate_fc1 = 1.0 / ((hidden_units_1 ** (1 - 2 * gamma_1)) * (hidden_units_2 ** (2 - 2 * gamma_2)) * (hidden_units_3**(3 - 2 * gamma_3)))
+        learning_rate_fc2 = 1.0 / ((hidden_units_1 ** (1 - 2 * gamma_1)) * (hidden_units_2 ** (1 - 2 * gamma_2)) * (hidden_units_3**(3 - 2 * gamma_3)))
+        learning_rate_fc3 = 1.0 / ((hidden_units_2 ** (1 - 2 * gamma_2)) * (hidden_units_3 ** (2 - 2 * gamma_3)))
+        learning_rate_fc4 = 1.0 / (hidden_units_3 ** (2 - 2 * gamma_3))
+        optimizer = SGD([{"params": net.model.fc1.parameters(), "lr": learning_rate_fc1},
+                              {"params": net.model.fc2.parameters(), "lr": learning_rate_fc2},
+                              {"params": net.model.fc3.parameters(), "lr": learning_rate_fc3},
+                              {"params": net.model.fc4.parameters(), "lr": learning_rate_fc4}], lr = 1.0)
     print(f"Model: {net.model}")
 
     if not sampler:
         h = 0.05
-        x = torch.arange(-1, 1 + h, h, device=device,requires_grad=True)
-        t = torch.arange(0, 1 + h, h, device=device, requires_grad=True)
+        x = torch.arange(-1, 1 + h, h, device=device)
+        t = torch.arange(0, 1 + h, h, device=device)
         X_int_train = torch.stack(torch.meshgrid(x[1:-1], t[1:-1], indexing='ij')).reshape(2, -1).T
+        X_int_train.requires_grad=True
         train_data = train_loader(X_int_train)
         bc1 = torch.stack(torch.meshgrid(x[0],
                                              t,
@@ -270,9 +277,9 @@ def main(pde:str,
 
 if __name__ == '__main__':
     pde='Burgers'
-    gamma_1_list = [0.8, 0.9]
-    gamma_2_list = [0.5,0.6, 0.7,0.8, 0.9]
-    gamma_3_list = [0.5, 0.7, 1.0]
+    gamma_1_list = [0.5, 0.7, 0.9]
+    gamma_2_list = [0.5, 0.7,0.9]
+    gamma_3_list = [0.5, 0.7, 0.9]
     hidden_units_1=100
     hidden_units_2=100
     hidden_units_3=100
@@ -281,11 +288,14 @@ if __name__ == '__main__':
     directory=os.getcwd()
     for gamma_1 in gamma_1_list:
         for gamma_2 in gamma_2_list:
-            main(pde=pde,
+            for gamma_3 in gamma_3_list:
+                main(pde=pde,
                      gamma_1=gamma_1,
                      gamma_2=gamma_2,
+                     gamma_3 = gamma_3,
                      hidden_units_1=hidden_units_1,
                      hidden_units_2=hidden_units_2,
+                     hidden_units_3 = hidden_units_3,
                      adam_epochs=adam_epochs,
                      directory=directory
                 )

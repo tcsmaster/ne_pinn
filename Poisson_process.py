@@ -148,12 +148,12 @@ def main(pde,
     
     X_int_train = torch.arange(-0.9, 1., 0.1, device=device, requires_grad=True).reshape(1, -1).T
     train_data = train_loader(X_int_train)
-    bc1 = torch.tensor([-1.], device=device, requires_grad=True)
-    bc2 = torch.tensor([1.], device=device, requires_grad=True)
+    bc1 = torch.tensor([-1.], device=device)
+    bc2 = torch.tensor([1.], device=device)
     X_bc_train = torch.cat([bc1, bc2]).unsqueeze(1)
 
-    y_bc1 = torch.zeros(len(bc1), device=device, requires_grad=True)
-    y_bc2 = torch.zeros(len(bc2), device=device, requires_grad=True)
+    y_bc1 = torch.zeros(len(bc1), device=device)
+    y_bc2 = torch.zeros(len(bc2), device=device)
     y_bc_train = torch.cat([y_bc1, y_bc2]).unsqueeze(1)
     boundary_data = bc_loader(X_bc_train, y_bc_train)
     results = net.training(train_data = train_data,
