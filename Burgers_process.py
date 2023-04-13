@@ -29,10 +29,8 @@ class BurgersNet():
             for batch in training_data:
                 optimizer.zero_grad()
                 u = self.model(batch)
-                print(u.grad_fn, batch.grad_fn)
                 loss_pde = BurgersPDE(batch, u, self.device)
                 print(loss_pde)
-                loss_pde.backward()
                 optimizer.step()
             for x, y in bc_data:
                 optimizer.zero_grad()
@@ -278,9 +276,9 @@ def main(pde:str,
 
 if __name__ == '__main__':
     pde='Burgers'
-    gamma_1_list = [0.5,0.7, 0.9]
-    gamma_2_list = [0.5,0.7, 0.9]
-    gamma_3_list = [0.5, 0.7, 0.9]
+    gamma_1_list = [0.7]
+    gamma_2_list = [0.7, 0.9]
+    gamma_3_list = [0.7, 0.9]
     hidden_units_1=100
     hidden_units_2=100
     hidden_units_3=100
@@ -295,6 +293,7 @@ if __name__ == '__main__':
                      gamma_3 = gamma_3,
                      hidden_units_1=hidden_units_1,
                      hidden_units_2=hidden_units_2,
+                     hidden_units_3 = hidden_units_3,
                      adam_epochs=adam_epochs,
                      directory=directory
                 )
