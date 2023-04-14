@@ -15,6 +15,7 @@ pde = "Burgers"
 epochs=1000
 hidden_units_1 = 100
 hidden_units_2 = 100
+hidden_units_3 = 100
 
 gamma_1_list = [0.5, 0.7, 0.9]
 gamma_2_list = [0.5, 0.7, 0.9]
@@ -30,7 +31,7 @@ for el in itertools.product(gamma_2_list, gamma_3_list):
                                            indexing="ij")).reshape(2, -1).T
     true_sol = usol.reshape(-1, 1)
     for gamma_1 in gamma_1_list:
-        net = BurgersNet(MLP2(num_input=2,
+        net = BurgersNet(MLP3(num_input=2,
                                   num_output=1,
                                   hidden_units_1=hidden_units_1,
                                   hidden_units_2=hidden_units_2,
@@ -41,7 +42,7 @@ for el in itertools.product(gamma_2_list, gamma_3_list):
                              ),
                              device=torch.device('cpu')
                   )
-        path = os.getcwd()+ f"/results/{pde}/3layer/normalized/loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{el[0]}_gamma3_{el[1]}_epochs_{epochs}_model.pth"
+        path = os.getcwd()+ f"/results/{pde}/3layer/normalized/SGD/loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_hidden3_{hidden_units_3}_gamma1_{gamma_1}_gamma2_{el[0]}_gamma3_{el[1]}_epochs_{epochs}_model.pth"
         net.model.load_state_dict(torch.load(path,map_location='cpu'))
         net.model.eval()
         with torch.no_grad():
@@ -51,8 +52,8 @@ for el in itertools.product(gamma_2_list, gamma_3_list):
         rel_l2_error[gamma_2_list.index(el[0]), gamma_3_list.index(el[1]), gamma_1_list.index(gamma_1)] = l2_relative_loss(pred, true_sol)
 out_rmse = np.row_stack(rmse_error.reshape(3, -1))
 out_rel_l2 = np.row_stack(rel_l2_error.reshape(3, -1))
-err_dir = f"/content/thesis/error_tables/{pde}/3layer"
+err_dir = f"/content/thesis/error_tables/{pde}/3layer/"
 if not os.path.isdir(err_dir):
     os.makedirs(err_dir)
-pd.DataFrame(rmse_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 0.9"], columns = columns=pd.MultiIndex.from_product((["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 0.9"], ["gamma_3 = 0.5", "gamma_3 = 0.7", "gamma_3 = 0.9"]))).to_csv(err_dir + f"/{pde}_3layer_rmse_table.csv")
-pd.DataFrame(rel_l2_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 0.9"], columns = columns=pd.MultiIndex.from_product((["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 0.9"], ["gamma_3 = 0.5", "gamma_3 = 0.7", "gamma_3 = 0.9"]))).to_csv(err_dir + f"/{pde}_3layer_rel_l2_table.csv")
+pd.DataFrame(out_rmse, index = ["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 0.9"], columns =pd.MultiIndex.from_product((["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 0.9"], ["gamma_3 = 0.5", "gamma_3 = 0.7", "gamma_3 = 0.9"]))).to_csv(err_dir + f"{pde}_3layer_rmse_table.csv")
+pd.DataFrame(out_rel_l2, index = ["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 0.9"], columns=pd.MultiIndex.from_product((["gamma_2 = 0.5", "gamma_2 = 0.7", "gamma_2 = 0.9"], ["gamma_3 = 0.5", "gamma_3 = 0.7", "gamma_3 = 0.9"]))).to_csv(err_dir + f"{pde}_3layer_rel_l2_table.csv")
