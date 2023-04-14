@@ -45,7 +45,7 @@ def load_accuracy_for_single_gamma(pde:str,
                                    gamma_2=gamma_2,
                                    hidden_units_3=hidden_units_3,
                                    gamma_3=gamma_3)
-            results_folder = f'results/{pde}/3layer/normalized/'
+            results_folder = f'results/{pde}/3layer/normalized/SGD/'
     else:
         if not gamma_3:
             fname = generate_file_name(pde=pde,
@@ -178,7 +178,7 @@ def run_2layer_accuracy_plots(pde,
                              hidden_units_1=hidden_units_1,
                              hidden_units_2=hidden_units_2,
                              directory=directory)
-    figures_directory = os.path.join(directory, f"figures/{pde}/2layer/normalized/")
+    figures_directory = os.path.join(directory, f"figures/{pde}/2layer/normalized/SGD/")
     if not os.path.isdir(figures_directory):
         os.makedirs(figures_directory)
     for gamma_1 in gamma_1_list:
@@ -411,7 +411,7 @@ def run_2layer_accuracy_plots_multiple_hidden_units(pde,
 if __name__ == '__main__':
     pde = "Burgers"
     acc = "Training Loss"
-    gamma_1_list = [0.5]
+    gamma_1_list = [0.5, 0.7, 0.9]
     gamma_2_list = [0.5, 0.7, 0.9]
     gamma_3_list = [0.5, 0.7, 0.9]
     hidden_units_1 = 100

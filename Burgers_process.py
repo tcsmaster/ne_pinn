@@ -30,7 +30,6 @@ class BurgersNet():
                 optimizer.zero_grad()
                 u = self.model(batch)
                 loss_pde = BurgersPDE(batch, u, self.device)
-                print(loss_pde)
                 optimizer.step()
             for x, y in bc_data:
                 optimizer.zero_grad()
@@ -192,7 +191,7 @@ def main(pde:str,
                                            gamma_1=gamma_1,
                                            gamma_2=gamma_2
             )
-            place = f'results/{pde}/2layer/normalized/'
+            place = f'results/{pde}/2layer/normalized/SGD/'
             results_directory = os.path.join(directory, place)
         else:
             file_name = generate_file_name(pde=pde,
@@ -204,7 +203,7 @@ def main(pde:str,
                                            hidden_units_3=hidden_units_3,
                                            gamma_3=gamma_3
             )
-            place = f'results/{pde}/3layer/normalized/'
+            place = f'results/{pde}/3layer/normalized/SGD/'
             results_directory = os.path.join(directory, place)
         save_results(results=results,
                  directory=results_directory,
@@ -276,9 +275,9 @@ def main(pde:str,
 
 if __name__ == '__main__':
     pde='Burgers'
-    gamma_1_list = [0.7]
-    gamma_2_list = [0.7, 0.9]
-    gamma_3_list = [0.7, 0.9]
+    gamma_1_list = [0.5, 0.7, 0.9]
+    gamma_2_list = [0.5, 0.7, 0.9]
+    gamma_3_list = [0.5, 0.7, 0.9]
     hidden_units_1=100
     hidden_units_2=100
     hidden_units_3=100
