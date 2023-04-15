@@ -26,3 +26,8 @@ def generate_file_name(pde,
     else:
         file_name = f"loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_hidden3_{hidden_units_3}_gamma1_{gamma_1}_gamma2_{gamma_2}_gamma3_{gamma_3}_epochs_{epochs}"
     return file_name
+
+def l2_relative_loss(pred, target):
+    return np.linalg.norm(pred- target)/np.linalg.norm(target)
+def rmse_vec_error(pred, target):
+    return np.linalg.norm(pred - target) / np.sqrt(len(pred))

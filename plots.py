@@ -45,30 +45,8 @@ def load_accuracy_for_single_gamma(pde:str,
                                    gamma_2=gamma_2,
                                    hidden_units_3=hidden_units_3,
                                    gamma_3=gamma_3)
-            results_folder = f'results/{pde}/3layer/normalized/SGD/'
-    else:
-        if not gamma_3:
-            fname = generate_file_name(pde=pde,
-                                   epochs=epochs,
-                                   hidden_units_1=hidden_units_1,
-                                   hidden_units_2=hidden_units_2,
-                                   gamma_1=gamma_1,
-                                   gamma_2=gamma_2,
-                                   sampler=sampler
-        )
-            results_folder = f'results/{pde}/2layer/{sampler}/'
-        else:
-            fname = generate_file_name(pde=pde,
-                                   epochs=epochs,
-                                   hidden_units_1=hidden_units_1,
-                                   hidden_units_2=hidden_units_2,
-                                   hidden_units_3 = hidden_units_3,
-                                   gamma_1=gamma_1,
-                                   gamma_2=gamma_2,
-                                   gamma_3 = gamma_3,
-                                   sampler=sampler
-        )
-            results_folder = f'results/{pde}/3layer/{sampler}/'
+            results_folder = f'results/{pde}/3layer/normalized/'
+
     # Create full path to data file, including extension
     path = os.path.join(directory, results_folder, fname) + '.csv'
     
@@ -342,93 +320,26 @@ def run_3layer_accuracy_plots(pde,
         plt.close('all')
     return
 
-
-def run_2layer_accuracy_plots_multiple_hidden_units(pde,
-                                                    epochs,
-                                                    acc,
-                                                    gamma_1,
-                                                    gamma_2,
-                                                    hidden_units_list_1,
-                                                    hidden_units_list_2,
-                                                    directory
-    ):
-    """
-    Plots and saves figures of test or train accuracy which compare 
-    different pairs of hidden units for fixed gammas for MLP2.    
-    
-    Parameters
-    ---------- 
-    model_name: str
-        'mlp2' 
-    directory: str
-        location of the data files and figures
-    """
-    
-    dict_data = dict()
-    
-    for hidden_units_1, hidden_units_2 in zip(hidden_units_list_1, hidden_units_list_2):
-    
-        dict_data[(hidden_units_1, hidden_units_2)] = load_accuracy_for_single_gamma(
-            pde=pde,
-            epochs=epochs,
-            gamma_1=gamma_1, 
-            gamma_2=gamma_2, 
-            hidden_units_1=hidden_units_1, 
-            hidden_units_2=hidden_units_2, 
-            directory=directory)[acc]
-                
-    data = pd.concat({
-        f'N1={hidden_units[0]},N2={hidden_units[1]}': dict_data[hidden_units]
-        for hidden_units in dict_data.keys()
-        }, axis=1)
-    
-    # Create a new figure and plot accuracy data
-    fig = plt.figure(figsize=(20, 10))
-    ax = data.plot()
-
-    # Set title, label legend and x- and y-axes
-    ax.set_title(f'{acc}:  gamma_1={gamma_1}, gamma_2={gamma_2} for {pde} pde')
-    plt.legend(title='hidden units', loc='center left', bbox_to_anchor=(1,0.5))
-    plt.xlabel('Number of Epochs')
-    y_label = acc
-    plt.ylabel(y_label)
-    plt.yscale('log')
-   
-    # Generate file name
-    fname = f'plot_{pde}_acc_{acc}_gamma1_{gamma_1}_gamma2_{gamma_2}'
-    
-    # Generate full path
-    figures_directory = os.path.join(directory, f'figures/{pde}/')
-    if not os.path.isdir(figures_directory):
-        os.makedirs(figures_directory)
-    fig_path = os.path.join(figures_directory, fname)
-    
-    
-    ax.figure.savefig(fig_path + '.jpg', dpi=300, bbox_inches='tight')
-    plt.close('all')
-    return
-
 if __name__ == '__main__':
-    pde = "Burgers"
-    acc = "Training Loss"
-    gamma_1_list = [0.5, 0.7, 0.9]
-    gamma_2_list = [0.5, 0.7, 0.9]
+    pde = "Poisson"
+    # "Training Loss", "Test_rmse_loss", "Test_rel_l2_loss"
+    acc = "Test_rmse_loss" 
+    gamma_1_list = [0.5, 0.6, 0.7,0.8, 0.9]
+    gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9]
     gamma_3_list = [0.5, 0.7, 0.9]
     hidden_units_1 = 100
     hidden_units_2 = 100
     hidden_units_3 = 100
-    epochs = 1000
+    epochs = 2000
     directory = os.getcwd()
 
-    run_3layer_accuracy_plots(pde=pde,
+    run_2layer_accuracy_plots(pde=pde,
                               epochs=epochs,
                               acc=acc,
                               gamma_1_list = gamma_1_list,
                               gamma_2_list = gamma_2_list,
-                              gamma_3_list=gamma_3_list,
                               hidden_units_1 = hidden_units_1,
                               hidden_units_2 = hidden_units_2,
-                              hidden_units_3 = hidden_units_3,
                               directory=directory)
 
 

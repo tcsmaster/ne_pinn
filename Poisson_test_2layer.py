@@ -52,8 +52,8 @@ for gamma_1 in gamma_1_list:
     if not os.path.isdir(fig_dir):
         os.makedirs(fig_dir)
     plt.savefig(fig_dir + file_name + ".jpg")
-err_dir= "/content/thesis/Error_tables/{pde}/"
+err_dir= f"/content/thesis/Error_tables/{pde}/"
 if not os.path.isdir(err_dir):
         os.makedirs(err_dir)
-pd.DataFrame(rmse_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.6","gamma_2 = 0.7", "gamma_2 = 0.8","gamma_2 = 0.9"], columns=["gamma_1 = 0.5", "gamma_2 = 0.6","gamma_1 = 0.7", "gamma_2 = 0.8","gamma_1 = 0.9"]).to_csv(err_dir + f"rmse_table_epochs_{epochs}.csv")
-pd.DataFrame(rel_l2_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.6","gamma_2 = 0.7", "gamma_2 = 0.8","gamma_2 = 0.9"], columns=["gamma_1 = 0.5", "gamma_2 = 0.6","gamma_1 = 0.7","gamma_2 = 0.8", "gamma_1 = 0.9"]).to_csv(err_dir + f"rel_l2_table_epochs_{epochs}.csv")
+pd.DataFrame(rmse_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.6","gamma_2 = 0.7", "gamma_2 = 0.8","gamma_2 = 0.9"], columns=["gamma_1 = 0.5", "gamma_1 = 0.6","gamma_1 = 0.7", "gamma_1 = 0.8","gamma_1 = 0.9"]).to_csv(err_dir + f"rmse_table_epochs_{epochs}.csv")
+pd.DataFrame(rel_l2_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.6","gamma_2 = 0.7", "gamma_2 = 0.8","gamma_2 = 0.9"], columns=["gamma_1 = 0.5", "gamma_1 = 0.6","gamma_1 = 0.7","gamma_1 = 0.8", "gamma_1 = 0.9"]).to_csv(err_dir + f"rel_l2_table_epochs_{epochs}.csv")

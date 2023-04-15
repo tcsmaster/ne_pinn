@@ -17,15 +17,17 @@ class BurgersNet():
                  train_data,
                  boundary_data,
                  init_data,
+                 test_data,
                  adam_epochs,
                  optimizer
         ):
         training_data = DataLoader(train_data, batch_size=1)
         bc_data = DataLoader(boundary_data, batch_size=1)
         ic_data = DataLoader(init_data, batch_size=1)
+        testing_data = DataLoader(test_data, batch_size=1)
         res = pd.DataFrame(None, columns = ["Training Loss"], dtype=float)
-        self.model.train()
         for e in range(adam_epochs):
+            self.model.train()
             for batch in training_data:
                 optimizer.zero_grad()
                 u = self.model(batch)
@@ -44,6 +46,18 @@ class BurgersNet():
                 loss.backward()
                 optimizer.step()
             res.loc[e, "Training Loss"] = loss.item()
+            self.model.eval()
+            with torch.no_grad():
+                total_rmse_loss = 0.0
+                total_rell2_loss = 0.0
+                for x, y in testing_data:
+                    pred = self.model(x)
+                    rmse_loss = rmse_vec_error(pred, y)
+                    rell2_loss = l2_relative_loss(pred, y)
+                    total_rmse_loss +=rmse_loss
+                    total_rell2_loss +=rell2_loss
+            res.loc[e, "Test_rmse_loss"] = total_rmse_loss / train_data.__len__()
+            res.loc[e, "Test_rel_l2_loss"] = total_rell2_loss / train_data.__len__()
         return res
 
 
@@ -152,7 +166,6 @@ def main(pde:str,
                               {"params": net.model.fc3.parameters(), "lr": learning_rate_fc3},
                               {"params": net.model.fc4.parameters(), "lr": learning_rate_fc4}], lr = 1.0)
     print(f"Model: {net.model}")
-
     if not sampler:
         h = 0.05
         x = torch.arange(-1, 1 + h, h, device=device)
@@ -176,9 +189,18 @@ def main(pde:str,
                                                 indexing='ij')).reshape(2, -1).T      
         y_ic_train = -torch.sin(np.pi * X_ic_train[:, 0]).unsqueeze(1)
         init_data = bc_loader(X_ic_train, y_ic_train)
+
+        data = np.load("Burgers.npz")
+        t, x, usol = data["t"], data["x"], data["usol"]
+        test_points = torch.stack(torch.meshgrid(torch.tensor([x], dtype=torch.float32).squeeze(),
+                                           torch.tensor([t], dtype=torch.float32).squeeze(),
+                                           indexing="ij")).reshape(2, -1).T
+        true_sol = usol.reshape(-1, 1)
+        test_data = bc_loader(test_points, true_sol)
         results = net.training(train_data = train_data,
                                boundary_data = boundary_data,
                                init_data = init_data,
+                               test_data=test_data,
                                adam_epochs=adam_epochs,
                                optimizer=optimizer
                   )
@@ -211,72 +233,12 @@ def main(pde:str,
         )
         path = results_directory + file_name + "_model.pth"
         torch.save(net.model.state_dict(), path)
-    else:
-        full_space = [torch.tensor([-1., 0.], device=device,requires_grad=True), torch.tensor([1., 1.], device=device,requires_grad=True)]
-        X_int_train = data_gen(space=full_space,
-                               n_samples=8000,
-                               sampler=sampler).to(device)
-        X_int_train.requires_grad=True
-        bc1 = torch.stack(torch.meshgrid(torch.tensor([-1.], device=device),
-                                         data_gen(space=[torch.tensor([0., 1.], device=device,)],
-                                                  n_samples=100,
-                                                  sampler=sampler).squeeze(),
-                                         indexing='ij')).reshape(2, -1).T
-        bc2 = torch.stack(torch.meshgrid(torch.tensor([1.], device=device),
-                                         data_gen(space=[torch.tensor([0., 1.], device=device)],
-                                                  n_samples=100,
-                                                  sampler=sampler).squeeze(),
-                                         indexing='ij')).reshape(2, -1).T
-        X_bc_train = torch.cat([bc1, bc2])
-        y_bc1 = torch.zeros(len(bc1))
-        y_bc2 = torch.zeros(len(bc2))
-        y_bc_train = torch.cat([y_bc1, y_bc2]).unsqueeze(1).to(device)
-        X_ic_train = torch.stack(torch.meshgrid(data_gen(space=[torch.tensor([-1.,1.], device=device)], n_samples=100, sampler=sampler).squeeze(), torch.tensor([0.]), indexing='ij')).reshape(2, -1).T.to(device)
-        y_ic_train = -torch.sin(np.pi*X_ic_train[:, 0]).unsqueeze(1)
-
-        results = net.training(X_int_train=X_int_train,
-                               X_bc_train=X_bc_train,
-                               X_ic_train=X_ic_train,
-                               y_bc_train=y_bc_train,
-                               y_ic_train=y_ic_train,
-                               adam_epochs=adam_epochs)
-
-    # Save accuracy results
-        if not gamma_3:
-            file_name = generate_file_name(pde=pde,
-                                           epochs=adam_epochs,
-                                           hidden_units_1=hidden_units_1,
-                                           hidden_units_2=hidden_units_2,
-                                           gamma_1=gamma_1,
-                                           gamma_2=gamma_2
-                        )
-            place = f'results/{pde}/2layer/{sampler}/'
-            results_directory = os.path.join(directory, place)
-        else:
-            file_name = generate_file_name(pde=pde,
-                                           epochs=adam_epochs,
-                                           hidden_units_1=hidden_units_1,
-                                           hidden_units_2=hidden_units_2,
-                                           gamma_1=gamma_1,
-                                           gamma_2=gamma_2,
-                                           hidden_units_3=hidden_units_3,
-                                           gamma_3=gamma_3
-                        )
-            place = f'results/{pde}/3layer/{sampler}/'
-            results_directory = os.path.join(directory, place)
-        save_results(results=results,
-                     directory=results_directory,
-                     file_name=file_name
-        )
-        path = results_directory + file_name + "_model.pth"
-        torch.save(net.model.state_dict(), path)
-
     return
 
 if __name__ == '__main__':
     pde='Burgers'
-    gamma_1_list = [0.5, 0.7, 0.9]
-    gamma_2_list = [0.5, 0.7, 0.9]
+    gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     gamma_3_list = [0.5, 0.7, 0.9]
     hidden_units_1=100
     hidden_units_2=100
@@ -285,14 +247,11 @@ if __name__ == '__main__':
     directory=os.getcwd()
     for gamma_1 in gamma_1_list:
         for gamma_2 in gamma_2_list:
-            for gamma_3 in gamma_3_list:
-                main(pde=pde,
+            main(pde=pde,
                      gamma_1=gamma_1,
                      gamma_2=gamma_2,
-                     gamma_3 = gamma_3,
                      hidden_units_1=hidden_units_1,
                      hidden_units_2=hidden_units_2,
-                     hidden_units_3 = hidden_units_3,
                      adam_epochs=adam_epochs,
                      directory=directory
                 )
