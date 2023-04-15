@@ -1,11 +1,7 @@
-import os
-from numpy import pi
 import pandas as pd
 from torch.optim import Adam, SGD
-from torch.nn import MSELoss
-from models import *
 from torch.utils.data import Dataset, DataLoader
-from pdes import PoissonPDE
+from pdes import *
 from utils import *
 
 class PoissonNet():
@@ -22,7 +18,7 @@ class PoissonNet():
                  boundary_data,
                  test_points,
                  true_sol,
-                 adam_epochs,
+                 epochs,
                  optimizer
         ):
         training_data = DataLoader(train_data, batch_size=1)
@@ -31,7 +27,7 @@ class PoissonNet():
                            columns = ["Training Loss", "Test_rmse_loss", "Test_rel_l2_loss"],
                            dtype=float
               )
-        for e in range(adam_epochs):
+        for e in range(epochs):
             self.model.train()
             for batch in training_data:
                 optimizer.zero_grad()
@@ -87,7 +83,7 @@ def main(pde,
          gamma_2,
          hidden_units_1,
          hidden_units_2,
-         adam_epochs,
+         epochs,
          directory,
          gamma_3 = None,
          hidden_units_3 = None,
@@ -119,9 +115,9 @@ def main(pde,
     """ 
     print(f"PDE:{pde}")
     if (not gamma_3):
-        print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, h_1={hidden_units_1}, h_2={hidden_units_2}, epochs={adam_epochs}")
+        print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, h_1={hidden_units_1}, h_2={hidden_units_2}, epochs={epochs}")
     else:
-        print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, g_3={gamma_3}, h_1={hidden_units_1}, h_2={hidden_units_2}, h_3={hidden_units_3}, epochs = {adam_epochs}")
+        print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, g_3={gamma_3}, h_1={hidden_units_1}, h_2={hidden_units_2}, h_3={hidden_units_3}, epochs = {epochs}")
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     if (not gamma_3):
         net = PoissonNet(MLP2(num_input=1,
@@ -188,7 +184,7 @@ def main(pde,
                            boundary_data = boundary_data,
                            test_points = test_points,
                            true_sol=true_sol,
-                           adam_epochs = adam_epochs,
+                           epochs = epochs,
                            optimizer=optimizer
               )
 
@@ -197,7 +193,7 @@ def main(pde,
     # Save accuracy results
     if not gamma_3:
         file_name = generate_file_name(pde=pde,
-                                       epochs=adam_epochs,
+                                       epochs=epochs,
                                        hidden_units_1=hidden_units_1,
                                        hidden_units_2=hidden_units_2,
                                        gamma_1=gamma_1,
@@ -206,7 +202,7 @@ def main(pde,
         results_directory = os.path.join(directory, f'results/{pde}/2layer/normalized/')
     else:
         file_name = generate_file_name(pde=pde,
-                                   epochs=adam_epochs,
+                                   epochs=epochs,
                                    hidden_units_1=hidden_units_1,
                                    hidden_units_2=hidden_units_2,
                                    gamma_1=gamma_1,
@@ -225,20 +221,24 @@ def main(pde,
 
 if __name__ == '__main__':
     pde='Poisson'
-    gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    gamma_3_list = [0.5,0.7,0.9]
+    gamma_1_list = [0.5, 0.7, 1.0]
+    gamma_2_list = [0.5, 0.7, 1.0]
+    gamma_3_list = [0.5, 0.7, 1.0]
     hidden_units_1=100
     hidden_units_2=100
     hidden_units_3=100
-    adam_epochs=2000
+    epochs=4000
     directory=os.getcwd()
     for gamma_1 in gamma_1_list:
-        for gamma_2 in gamma_2_list:         
-               main(pde=pde,
-                gamma_1=gamma_1,
-                gamma_2=gamma_2,
-               hidden_units_1=hidden_units_1,
-             hidden_units_2=hidden_units_2,
-             adam_epochs=adam_epochs,
-             directory=directory)
+        for gamma_2 in gamma_2_list:
+            for gamma_3 in gamma_3_list:       
+                main(pde=pde,
+                    gamma_1=gamma_1,
+                    gamma_2=gamma_2,
+                    gamma_3=gamma_3,
+                    hidden_units_1=hidden_units_1,
+                    hidden_units_2=hidden_units_2,
+                    hidden_units_3=hidden_units_3,
+                    epochs=epochs,
+                    directory=directory
+                )

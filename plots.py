@@ -330,7 +330,7 @@ if __name__ == '__main__':
     hidden_units_1 = 100
     hidden_units_2 = 100
     hidden_units_3 = 100
-    epochs = 2000
+    epochs = 4000
     directory = os.getcwd()
 
     run_2layer_accuracy_plots(pde=pde,

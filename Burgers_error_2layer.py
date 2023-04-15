@@ -1,7 +1,5 @@
 import torch
-import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from Burgers_process import *
 from utils import *
 
@@ -46,5 +44,5 @@ for gamma_1 in gamma_1_list:
 err_dir = f"/content/thesis/error_tables/{pde}/2layer"
 if not os.path.isdir(err_dir):
     os.makedirs(err_dir)
-pd.DataFrame(rmse_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.6", "gamma_2 = 0.7", "gamma_2 = 0.8", "gamma_2 = 0.9"], columns = ["gamma_1 = 0.5", "gamma_1 = 0.6", "gamma_1 = 0.7", "gamma_1 = 0.8", "gamma_1 = 0.9"]).to_csv(err_dir + "/Poisson_2layer_rmse_table.csv")
-pd.DataFrame(rel_l2_error, index = ["gamma_2 = 0.5", "gamma_2 = 0.6", "gamma_2 = 0.7", "gamma_2 = 0.8", "gamma_2 = 0.9"], columns = ["gamma_1 = 0.5", "gamma_1 = 0.6", "gamma_1 = 0.7", "gamma_1 = 0.8", "gamma_1 = 0.9"]).to_csv(err_dir + "/Poisson_2layer_rel_l2_table.csv")
+pd.DataFrame(rmse_error, index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list], columns = [f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]).to_csv(err_dir + "/Poisson_2layer_rmse_table.csv")
+pd.DataFrame(rel_l2_error, index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list], columns = [f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]).to_csv(err_dir + "/Poisson_2layer_rel_l2_table.csv")

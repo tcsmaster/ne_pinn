@@ -1,6 +1,4 @@
-import torch
 import os
-from scipy.stats.qmc import Halton, Sobol, scale, LatinHypercube
 import numpy as np
 from models import *
 
