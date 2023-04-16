@@ -24,7 +24,7 @@ class PoissonNet():
         training_data = DataLoader(train_data, batch_size=1)
         bc_data = DataLoader(boundary_data, batch_size=1)
         res = pd.DataFrame(None,
-                           columns = ["Training Loss", "Test_rmse_loss", "Test_rel_l2_loss"],
+                           columns = ["Training Loss", "Test_mse_loss", "Test_rel_l2_loss"],
                            dtype=float
               )
         for e in range(epochs):
@@ -50,7 +50,7 @@ class PoissonNet():
                 pred = self.model(test_points)
                 rmse_loss = rmse_vec_error(pred, true_sol)
                 rell2_loss = l2_relative_loss(pred, true_sol)
-                res.loc[e, "Test_rmse_loss"] = rmse_loss
+                res.loc[e, "Test_mse_loss"] = rmse_loss
                 res.loc[e, "Test_rel_l2_loss"] = rell2_loss
 
         return res
