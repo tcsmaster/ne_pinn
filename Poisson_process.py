@@ -3,7 +3,7 @@ from torch.optim import SGD
 from torch.utils.data import Dataset, DataLoader
 from pdes import *
 from utils import *
-
+import wandb
 class PoissonNet():
     """
     This class is a blueprint for solving a 1D Poisson equation with Dirichlet BC
@@ -21,6 +21,7 @@ class PoissonNet():
                  epochs,
                  optimizer
         ):
+        wandb.watch(self.model, log="all", log_freq=1)
         training_data = DataLoader(train_data, batch_size=1)
         bc_data = DataLoader(boundary_data, batch_size=1)
         res = pd.DataFrame(None,
@@ -44,11 +45,12 @@ class PoissonNet():
                 loss = MSELoss()(pred, y)
                 loss.backward()
                 optimizer.step()
+                wandb.log({"loss: ": loss})
             res.loc[e, "Training Loss"] = loss.item()
             self.model.eval()
             with torch.no_grad():
                 pred = self.model(test_points)
-                rmse_loss = rmse_vec_error(pred, true_sol)
+                rmse_loss = mse_vec_error(pred, true_sol)
                 rell2_loss = l2_relative_loss(pred, true_sol)
                 res.loc[e, "Test_mse_loss"] = rmse_loss
                 res.loc[e, "Test_rel_l2_loss"] = rell2_loss
@@ -179,6 +181,7 @@ def main(pde,
 
     test_points = torch.linspace(-1, 1, 30, device=device).reshape(1, -1).T
     true_sol = torch.sin(pi*test_points)
+    wandb.init(project="thesis")
     results = net.training(train_data = train_data,
                            boundary_data = boundary_data,
                            test_points = test_points,
@@ -198,7 +201,7 @@ def main(pde,
                                        gamma_1=gamma_1,
                                        gamma_2=gamma_2
         )
-        results_directory = os.path.join(directory, f'results/{pde}/2layer/normalized/')
+        results_directory = os.path.join(directory, f'results/{pde}/2layer/{optimizer.__class__.__name__}/')
     else:
         file_name = generate_file_name(pde=pde,
                                    epochs=epochs,
@@ -209,7 +212,7 @@ def main(pde,
                                    hidden_units_3=hidden_units_3,
                                    gamma_3=gamma_3
         )
-        results_directory = os.path.join(directory, f'results/{pde}/3layer/normalized/')
+        results_directory = os.path.join(directory, f'results/{pde}/3layer/{optimizer.__class__.__name__}/')
     save_results(results=results,
                  directory=results_directory,
                  file_name=file_name
@@ -220,24 +223,21 @@ def main(pde,
 
 if __name__ == '__main__':
     pde='Poisson'
-    gamma_1_list = [0.5, 0.7, 1.0]
-    gamma_2_list = [0.5, 0.7, 1.0]
+    gamma_1_list = [0.5]
+    gamma_2_list = [1.0]
     gamma_3_list = [0.5, 0.7, 1.0]
     hidden_units_1=100
     hidden_units_2=100
     hidden_units_3=100
-    epochs=4000
+    epochs=100
     directory=os.getcwd()
     for gamma_1 in gamma_1_list:
-        for gamma_2 in gamma_2_list:
-            for gamma_3 in gamma_3_list:       
+        for gamma_2 in gamma_2_list:      
                 main(pde=pde,
                     gamma_1=gamma_1,
                     gamma_2=gamma_2,
-                    gamma_3=gamma_3,
                     hidden_units_1=hidden_units_1,
                     hidden_units_2=hidden_units_2,
-                    hidden_units_3=hidden_units_3,
                     epochs=epochs,
                     directory=directory
                 )

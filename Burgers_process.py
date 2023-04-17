@@ -231,7 +231,7 @@ def main(pde:str,
                                            gamma_1=gamma_1,
                                            gamma_2=gamma_2
                         )
-            place = f'results/{pde}/2layer/normalized/SGD/'
+            place = f'results/{pde}/2layer/{optimizer.__class__.__name__}/'
             results_directory = os.path.join(directory, place)
         else:
             file_name = generate_file_name(pde=pde,
@@ -243,7 +243,7 @@ def main(pde:str,
                                            hidden_units_3=hidden_units_3,
                                            gamma_3=gamma_3
                         )
-            place = f'results/{pde}/3layer/normalized/SGD/'
+            place = f'results/{pde}/3layer/{optimizer.__class__.__name__}/'
             results_directory = os.path.join(directory, place)
         save_results(results=results,
                  directory=results_directory,

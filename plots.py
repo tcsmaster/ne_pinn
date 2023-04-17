@@ -21,6 +21,7 @@ def load_accuracy_for_single_gamma(pde:str,
                                    gamma_1:float,
                                    gamma_2:float,
                                    directory:str,
+                                   optimizer:str,
                                    hidden_units_3=None,
                                    gamma_3 = None,
                                    sampler=None
@@ -35,7 +36,7 @@ def load_accuracy_for_single_gamma(pde:str,
                                    gamma_1=gamma_1,
                                    gamma_2=gamma_2
         )
-            results_folder = f'results/{pde}/2layer/normalized/'
+            results_folder = f'results/{pde}/2layer/{optimizer}/'
         else:
             fname = generate_file_name(pde=pde,
                                    epochs=epochs,
@@ -45,7 +46,7 @@ def load_accuracy_for_single_gamma(pde:str,
                                    gamma_2=gamma_2,
                                    hidden_units_3=hidden_units_3,
                                    gamma_3=gamma_3)
-            results_folder = f'results/{pde}/3layer/normalized/'
+            results_folder = f'results/{pde}/3layer/{optimizer}/'
 
     # Create full path to data file, including extension
     path = os.path.join(directory, results_folder, fname) + '.csv'
@@ -64,6 +65,7 @@ def load_all_accuracy(pde,
                       hidden_units_1,
                       hidden_units_2,
                       directory,
+                      optimizer,
                       hidden_units_3 =None, 
                       gamma_3_list =None
     ):
@@ -99,7 +101,8 @@ def load_all_accuracy(pde,
                                                       hidden_units_2=hidden_units_2,
                                                       gamma_1=gamma_1,
                                                       gamma_2=gamma_2,
-                                                      directory=directory
+                                                      directory=directory,
+                                                      optimizer=optimizer
                 )
                 dict_data[(gamma_1,gamma_2)] = data[acc]
     else:
@@ -114,7 +117,8 @@ def load_all_accuracy(pde,
                                                           gamma_1=gamma_1,
                                                           gamma_2=gamma_2,
                                                           gamma_3=gamma_3,
-                                                          directory=directory
+                                                          directory=directory,
+                                                          optimizer=optimizer
                     )
                     dict_data[(gamma_1, gamma_2, gamma_3)] = data[acc]
         
@@ -130,7 +134,8 @@ def run_2layer_accuracy_plots(pde,
                               gamma_2_list,
                               hidden_units_1,
                               hidden_units_2,
-                              directory
+                              directory,
+                              optimizer
     ):
     """Plots and saves figures of test or train accuracy for lists of multiple 
     gamma values for Multi-layer perceptron with two hidden layers (MLP2)
@@ -155,7 +160,8 @@ def run_2layer_accuracy_plots(pde,
                              gamma_2_list=gamma_2_list,
                              hidden_units_1=hidden_units_1,
                              hidden_units_2=hidden_units_2,
-                             directory=directory)
+                             directory=directory,
+                             optimizer=optimizer)
     figures_directory = os.path.join(directory, f"figures/{pde}/2layer/normalized/SGD/")
     if not os.path.isdir(figures_directory):
         os.makedirs(figures_directory)
@@ -201,7 +207,8 @@ def run_3layer_accuracy_plots(pde,
                               hidden_units_1,
                               hidden_units_2,
                               hidden_units_3, 
-                              directory
+                              directory,
+                              optimizer
     ):
     """Plots and saves figures of test or train accuracy for lists of multiple 
     gamma values for Multi-layer perceptron with three hidden layers (MLP3)
@@ -234,7 +241,8 @@ def run_3layer_accuracy_plots(pde,
                              hidden_units_1=hidden_units_1,
                              hidden_units_2=hidden_units_2,
                              hidden_units_3=hidden_units_3,
-                             directory=directory)
+                             directory=directory,
+                             optimizer=optimizer)
     
     line_styles = ['solid', 'dashed', 'dotted']
     colors = ['blue', 'green', 'orange']
@@ -323,16 +331,16 @@ def run_3layer_accuracy_plots(pde,
 if __name__ == '__main__':
     pde = "Poisson"
     # "Training Loss", "Test_rmse_loss", "Test_rel_l2_loss"
-    acc = "Test_rmse_loss" 
-    gamma_1_list = [0.5, 0.6, 0.7,0.8, 0.9]
-    gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9]
+    acc = "Test mse loss" 
+    gamma_1_list = [0.5, 0.6, 0.7,0.8, 0.9, 1.0]
+    gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     gamma_3_list = [0.5, 0.7, 0.9]
     hidden_units_1 = 100
     hidden_units_2 = 100
     hidden_units_3 = 100
-    epochs = 4000
+    epochs = 20000
     directory = os.getcwd()
-
+    optimizer="Adam_with_amsgrad"
     run_2layer_accuracy_plots(pde=pde,
                               epochs=epochs,
                               acc=acc,
@@ -340,7 +348,8 @@ if __name__ == '__main__':
                               gamma_2_list = gamma_2_list,
                               hidden_units_1 = hidden_units_1,
                               hidden_units_2 = hidden_units_2,
-                              directory=directory)
+                              directory=directory,
+                              optimizer=optimizer)
 
 
 

@@ -42,7 +42,6 @@ class PoissonNet():
             self.model.eval()
             with torch.no_grad():
                 pred = self.model(X_test)
-                pred = pred.cpu().detach().numpy()
                 mse_loss = mse_vec_error(pred, y_test)
                 rell2_loss = l2_relative_loss(pred, y_test)
                 res.loc[e, "Test mse loss"] = mse_loss
@@ -151,7 +150,7 @@ def main(pde,
                                        gamma_1=gamma_1,
                                        gamma_2=gamma_2
         )
-        results_directory = os.path.join(directory, f'results/{pde}/2layer/normalized/')
+        results_directory = os.path.join(directory, f'results/{pde}/2layer/{optimizer.__class__.__name__}/')
     else:
         file_name = generate_file_name(pde=pde,
                                    epochs=epochs,
@@ -162,7 +161,7 @@ def main(pde,
                                    hidden_units_3=hidden_units_3,
                                    gamma_3=gamma_3
         )
-        results_directory = os.path.join(directory, f'results/{pde}/3layer/normalized/')
+        results_directory = os.path.join(directory, f'results/{pde}/3layer/{optimizer.__class__.__name__}/')
     save_results(results=results,
                  directory=results_directory,
                  file_name=file_name
@@ -173,8 +172,8 @@ def main(pde,
 
 if __name__ == '__main__':
     pde='Poisson'
-    gamma_1_list = [0.5, 0.7, 1.0]
-    gamma_2_list = [0.5, 0.7, 1.0]
+    gamma_1_list = [0.5, 0.6, 0.7,0.8, 0.9, 1.0]
+    gamma_2_list = [0.5, 0.6, 0.7,0.8, 0.9, 1.0]
     gamma_3_list = [0.5, 0.7, 1.0]
     hidden_units_1=100
     hidden_units_2=100
