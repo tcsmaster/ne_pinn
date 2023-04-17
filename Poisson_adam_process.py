@@ -1,6 +1,5 @@
 import pandas as pd
-from torch.optim import Adam, SGD
-from torch.utils.data import Dataset, DataLoader
+from torch.optim import Adam
 from pdes import *
 from utils import *
 
@@ -35,17 +34,17 @@ class PoissonNet():
                                       self.device
                            )
             bc_pred = self.model(X_bc_train)
-            loss_bc = MSELoss()(bc_pred, y_test)
+            loss_bc = MSELoss()(bc_pred, y_bc_train)
             loss = loss_pde + loss_bc
             loss.backward()
             optimizer.step()
             res.loc[e, "Training Loss"] = loss.item()
             self.model.eval()
             with torch.no_grad():
-                pred = self.model(test_points)
+                pred = self.model(X_test)
                 pred = pred.cpu().detach().numpy()
-                mse_loss = mse_vec_error(pred, true_sol)
-                rell2_loss = l2_relative_loss(pred, true_sol)
+                mse_loss = mse_vec_error(pred, y_test)
+                rell2_loss = l2_relative_loss(pred, y_test)
                 res.loc[e, "Test mse loss"] = mse_loss
                 res.loc[e, "Test_rel_l2_loss"] = rell2_loss
         return res
@@ -109,8 +108,7 @@ def main(pde,
                               hidden_units_3=hidden_units_3,
                               gamma_1=gamma_1,
                               gamma_2=gamma_2,
-                              gamma_3=gamma_3,
-                              sampler=sampler
+                              gamma_3=gamma_3
                          ),
                          device=device
               )
@@ -130,11 +128,11 @@ def main(pde,
     y_bc2 = torch.zeros(len(bc2), device=device)
     y_bc_train = torch.cat([y_bc1, y_bc2]).unsqueeze(1)
 
-    test_points = torch.linspace(-1, 1, 30, device=device).reshape(1, -1).T
-    true_sol = torch.sin(pi*test_points)
+    X_test = torch.linspace(-1, 1, 30, device=device).reshape(1, -1).T
+    y_test = torch.sin(pi*X_test)
     optimizer = Adam(net.model.parameters(), amsgrad=True)
     results = net.training(X_int_train=X_int_train,
-                 X_bc_trainX_bc_train,
+                 X_bc_train=X_bc_train,
                  y_bc_train=y_bc_train,
                  X_test=X_test,
                  y_test=y_test,
@@ -184,15 +182,12 @@ if __name__ == '__main__':
     epochs=20000
     directory=os.getcwd()
     for gamma_1 in gamma_1_list:
-        for gamma_2 in gamma_2_list:
-            for gamma_3 in gamma_3_list:       
-                main(pde=pde,
+        for gamma_2 in gamma_2_list:     
+            main(pde=pde,
                     gamma_1=gamma_1,
                     gamma_2=gamma_2,
-                    gamma_3=gamma_3,
                     hidden_units_1=hidden_units_1,
                     hidden_units_2=hidden_units_2,
-                    hidden_units_3=hidden_units_3,
                     epochs=epochs,
                     directory=directory
                 )

@@ -27,5 +27,5 @@ def generate_file_name(pde,
 
 def l2_relative_loss(pred, target):
     return np.linalg.norm(pred- target)/np.linalg.norm(target)
-def rmse_vec_error(pred, target):
+def mse_vec_error(pred, target):
     return np.linalg.norm(pred - target) / np.sqrt(len(pred))

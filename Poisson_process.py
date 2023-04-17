@@ -1,5 +1,5 @@
 import pandas as pd
-from torch.optim import Adam, SGD
+from torch.optim import SGD
 from torch.utils.data import Dataset, DataLoader
 from pdes import *
 from utils import *
@@ -145,8 +145,7 @@ def main(pde,
                               hidden_units_3=hidden_units_3,
                               gamma_1=gamma_1,
                               gamma_2=gamma_2,
-                              gamma_3=gamma_3,
-                              sampler=sampler
+                              gamma_3=gamma_3
                          ),
                          device=device
               )
