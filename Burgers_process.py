@@ -49,6 +49,7 @@ class BurgersNet():
             self.model.eval()
             with torch.no_grad():
                 pred = self.model(test_points)
+                pred = pred.cpu().detach().numpy()
                 rmse_loss = rmse_vec_error(pred, true_sol)
                 rell2_loss = l2_relative_loss(pred, true_sol)
                 res.loc[e, "Test_mse_loss"] = rmse_loss
@@ -254,13 +255,13 @@ def main(pde:str,
 
 if __name__ == '__main__':
     pde='Burgers'
-    gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9]
+    gamma_1_list = [0.6]
+    gamma_2_list = [0.6, 0.7, 0.8, 0.9]
     gamma_3_list = [0.5, 0.7, 0.9]
     hidden_units_1=100
     hidden_units_2=100
     hidden_units_3=100
-    epochs = 100
+    epochs = 2000
     directory=os.getcwd()
     for gamma_1 in gamma_1_list:
         for gamma_2 in gamma_2_list:
