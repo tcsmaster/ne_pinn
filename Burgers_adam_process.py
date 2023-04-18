@@ -20,10 +20,11 @@ class BurgersNet():
                  epochs,
                  optimizer
         ):
-        res = pd.DataFrame(None,
-                           columns = ["Training Loss", "Test mse loss", "Test_rel_l2_loss"],
-                           dtype=float
-              )
+        res = pd.DataFrame(
+            None,
+            columns = ["Training Loss", "Test mse loss", "Test_rel_l2_loss"],
+            dtype=float
+        )
         for e in range(epochs):
             self.model.train()
             optimizer.zero_grad()
@@ -116,10 +117,10 @@ def main(pde:str,
     x = torch.arange(-1, 1 + h, h, device=device)
     t = torch.arange(0, 1 + h, h, device=device)
     X_int_train = torch.stack(torch.meshgrid(x[1:-1],
-                                                 t[1:-1],
-                                                 indexing='ij'
-                                  )
-                      ).reshape(2, -1).T
+                                             t[1:-1],
+                                             indexing='ij'
+                              )
+                  ).reshape(2, -1).T
     X_int_train.requires_grad=True
 
     bc1 = torch.stack(torch.meshgrid(x[0],
@@ -148,46 +149,46 @@ def main(pde:str,
     X_test = torch.stack(torch.meshgrid(torch.tensor([x],
                                                      dtype=torch.float32,
                                                      device=device
-                                                 ).squeeze(),
+                                        ).squeeze(),
                                         torch.tensor([t],
                                                               dtype=torch.float32,
                                                               device=device
-                                                 ).squeeze(),
+                                        ).squeeze(),
                                         indexing="ij"
-                                  )
-                      ).reshape(2, -1).T
+                         )
+             ).reshape(2, -1).T
     y_test = usol.reshape(-1, 1)
     optimizer = Adam(net.model.parameters(), amsgrad=True)
     results = net.training(X_int_train = X_int_train,
-                               X_bc_train=X_bc_train,
-                               y_bc_train=y_bc_train,
-                               X_ic_train=X_ic_train,
-                               y_ic_train=y_ic_train,
-                               X_test=X_test,
-                               y_test=y_test,
-                               epochs=epochs,
-                               optimizer=optimizer
-                  )
+                           X_bc_train=X_bc_train,
+                           y_bc_train=y_bc_train,
+                           X_ic_train=X_ic_train,
+                           y_ic_train=y_ic_train,
+                           X_test=X_test,
+                           y_test=y_test,
+                           epochs=epochs,
+                           optimizer=optimizer
+              )
 
     if not gamma_3:
         file_name = generate_file_name(pde=pde,
-                                           epochs=epochs,
-                                           hidden_units_1=hidden_units_1,
-                                           hidden_units_2=hidden_units_2,
-                                           gamma_1=gamma_1,
-                                           gamma_2=gamma_2
-                        )
+                                       epochs=epochs,
+                                       hidden_units_1=hidden_units_1,
+                                       hidden_units_2=hidden_units_2,
+                                       gamma_1=gamma_1,
+                                       gamma_2=gamma_2
+                    )
         place = f'results/{pde}/2layer/{optimizer.__class__.__name__}/'
         results_directory = os.path.join(directory, place)
     else:
         file_name = generate_file_name(pde=pde,
-                                           epochs=epochs,
-                                           hidden_units_1=hidden_units_1,
-                                           hidden_units_2=hidden_units_2,
-                                           gamma_1=gamma_1,
-                                           gamma_2=gamma_2,
-                                           hidden_units_3=hidden_units_3,
-                                           gamma_3=gamma_3
+                                       epochs=epochs,
+                                       hidden_units_1=hidden_units_1,
+                                       hidden_units_2=hidden_units_2,
+                                       hidden_units_3=hidden_units_3,
+                                       gamma_1=gamma_1,
+                                       gamma_2=gamma_2,
+                                       gamma_3=gamma_3
                         )
         place = f'results/{pde}/3layer/normalized/{optimizer.__class__.__name__}/'
         results_directory = os.path.join(directory, place)
@@ -201,8 +202,8 @@ def main(pde:str,
 
 if __name__ == '__main__':
     pde='Burgers'
-    gamma_1_list = [0.5]
-    gamma_2_list = [0.5, 0.7, 1.0]
+    gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     gamma_3_list = [0.5, 0.7, 0.9]
     hidden_units_1=100
     hidden_units_2=100

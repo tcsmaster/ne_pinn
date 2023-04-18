@@ -203,13 +203,13 @@ def main(pde:str,
         data = np.load("Burgers.npz")
         t, x, usol = data["t"], data["x"], data["usol"]
         test_points = torch.stack(torch.meshgrid(torch.tensor([x],
-                                                              dtype=torch.float32
-                                                 )
-                                                 .squeeze(),
+                                                              dtype=torch.float32,
+                                                              device=device
+                                                 ).squeeze(),
                                                  torch.tensor([t],
-                                                              dtype=torch.float32
-                                                 )
-                                                 .squeeze(),
+                                                              dtype=torch.float32,
+                                                              device=device
+                                                 ).squeeze(),
                                                  indexing="ij"
                                   )
                       ).reshape(2, -1).T
