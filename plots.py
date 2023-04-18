@@ -330,7 +330,7 @@ def run_3layer_accuracy_plots(pde,
 
 if __name__ == '__main__':
     pde = "Poisson"
-    # "Training Loss", "Test_rmse_loss", "Test_rel_l2_loss"
+    # "Training Loss", "Test mse loss", "Test_rel_l2_loss"
     acc = "Test mse loss" 
     gamma_1_list = [0.5, 0.6, 0.7,0.8, 0.9, 1.0]
     gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]

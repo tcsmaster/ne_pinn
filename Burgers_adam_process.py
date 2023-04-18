@@ -169,7 +169,7 @@ def main(pde:str,
                            epochs=epochs,
                            optimizer=optimizer
               )
-
+    # test mse loss and rel l2 loss saving here
     if not gamma_3:
         file_name = generate_file_name(pde=pde,
                                        epochs=epochs,
@@ -202,8 +202,8 @@ def main(pde:str,
 
 if __name__ == '__main__':
     pde='Burgers'
-    gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    gamma_1_list = [0.6, 0.7]
+    gamma_2_list = [0.5]
     gamma_3_list = [0.5, 0.7, 0.9]
     hidden_units_1=100
     hidden_units_2=100
