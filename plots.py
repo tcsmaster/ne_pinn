@@ -3,12 +3,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from utils import generate_file_name
 
-plt.rcParams.update({                      # setup matplotlib to use latex for output
+plt.rcParams.update({
     "font.monospace": [],
     "figure.figsize": (12,8),
     "axes.labelsize": 20,           
     "font.size": 20,
-    "legend.fontsize": 20,               # Make the legend/label fonts a little smaller
+    "legend.fontsize": 20,  
     "xtick.labelsize": 20,
     "ytick.labelsize": 20,
     })
@@ -93,7 +93,7 @@ def load_all_accuracy(pde,
     return results
 
 
-def run_2layer_accuracy_plots(
+def run_accuracy_plots(
     pde,
     epochs,
     acc,
@@ -138,7 +138,7 @@ def run_2layer_accuracy_plots(
         fig = plt.figure(figsize=(20, 10))
         ax = data[gamma_1].plot()
         ax.set_title(f'{acc} for $\gamma_1={{{gamma_1}}}$ for {pde} pde')
-        plt.legend(title='$\gamma_2$', loc='best')
+        plt.legend(title='$\gamma_2$', loc='lower center', bbox_to_anchor = [0.5, -0.3], ncols = len(gamma_2_list))
         plt.xlabel('Number of Epochs')
         plt.ylabel(acc)
         #plt.yscale('log')
@@ -154,7 +154,7 @@ def run_2layer_accuracy_plots(
         fig = plt.figure(figsize=(20, 10))
         ax = data.xs(gamma_2, level=1, axis=1).plot()
         ax.set_title(f'{acc} for $\gamma_2={{{gamma_2}}}$')
-        plt.legend(title='$\gamma_1$', loc='best')
+        plt.legend(title='$\gamma_1$', loc='lower center', bbox_to_anchor = [0.5, -0.3], ncols = len(gamma_1_list))
         plt.xlabel('Number of Epochs')
         plt.ylabel(acc)
         #plt.yscale('log')
@@ -173,14 +173,12 @@ if __name__ == '__main__':
     acc = "Test mse loss" 
     gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    gamma_3_list = [0.5, 0.7, 0.9]
     hidden_units_1 = 100
     hidden_units_2 = 100
-    hidden_units_3 = 100
     epochs = 20000
     directory = os.getcwd()
     optimizer="Adam"
-    run_2layer_accuracy_plots(pde=pde,
+    run_accuracy_plots(pde=pde,
                               epochs=epochs,
                               acc=acc,
                               gamma_1_list = gamma_1_list,
