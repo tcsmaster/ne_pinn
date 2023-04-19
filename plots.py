@@ -6,7 +6,7 @@ from utils import generate_file_name
 plt.rcParams.update({                      # setup matplotlib to use latex for output
     "font.monospace": [],
     "figure.figsize": (12,8),
-    "axes.labelsize": 20,               # LaTeX default is 10pt font.
+    "axes.labelsize": 20,           
     "font.size": 20,
     "legend.fontsize": 20,               # Make the legend/label fonts a little smaller
     "xtick.labelsize": 20,
@@ -21,32 +21,16 @@ def load_accuracy_for_single_gamma(pde:str,
                                    gamma_1:float,
                                    gamma_2:float,
                                    directory:str,
-                                   optimizer:str,
-                                   hidden_units_3=None,
-                                   gamma_3 = None,
-                                   sampler=None
+                                   optimizer:str
     ):
-
-    if not sampler:
-        if not gamma_3:
-            fname = generate_file_name(pde=pde,
+    fname = generate_file_name(pde=pde,
                                    epochs=epochs,
                                    hidden_units_1=hidden_units_1,
                                    hidden_units_2=hidden_units_2,
                                    gamma_1=gamma_1,
                                    gamma_2=gamma_2
         )
-            results_folder = f'results/{pde}/2layer/{optimizer}/'
-        else:
-            fname = generate_file_name(pde=pde,
-                                   epochs=epochs,
-                                   hidden_units_1=hidden_units_1,
-                                   hidden_units_2=hidden_units_2,
-                                   gamma_1=gamma_1,
-                                   gamma_2=gamma_2,
-                                   hidden_units_3=hidden_units_3,
-                                   gamma_3=gamma_3)
-            results_folder = f'results/{pde}/3layer/{optimizer}/'
+    results_folder = f'results/{pde}/2layer/{optimizer}/'
 
     # Create full path to data file, including extension
     path = os.path.join(directory, results_folder, fname) + '.csv'
@@ -65,9 +49,7 @@ def load_all_accuracy(pde,
                       hidden_units_1,
                       hidden_units_2,
                       directory,
-                      optimizer,
-                      hidden_units_3 =None, 
-                      gamma_3_list =None
+                      optimizer
     ):
     """Returns a DataFrame with either test or train accuracy by epoch for  
     lists of gamma values
@@ -92,51 +74,36 @@ def load_all_accuracy(pde,
     dict_data = dict()
 
     # Iterate over list of gamma values and load accuracy data
-    if not gamma_3_list:
-        for gamma_1 in gamma_1_list:
-            for gamma_2 in gamma_2_list:
-                data = load_accuracy_for_single_gamma(pde=pde,
-                                                      epochs=epochs,
-                                                      hidden_units_1=hidden_units_1,
-                                                      hidden_units_2=hidden_units_2,
-                                                      gamma_1=gamma_1,
-                                                      gamma_2=gamma_2,
-                                                      directory=directory,
-                                                      optimizer=optimizer
+    for gamma_1 in gamma_1_list:
+        for gamma_2 in gamma_2_list:
+            data = load_accuracy_for_single_gamma(
+                    pde=pde,
+                    epochs=epochs,
+                    hidden_units_1=hidden_units_1,
+                    hidden_units_2=hidden_units_2,
+                    gamma_1=gamma_1,
+                    gamma_2=gamma_2,
+                    directory=directory,
+                    optimizer=optimizer
                 )
-                dict_data[(gamma_1,gamma_2)] = data[acc]
-    else:
-        for gamma_1 in gamma_1_list:
-            for gamma_2 in gamma_2_list:
-                for gamma_3 in gamma_3_list:
-                    data = load_accuracy_for_single_gamma(pde=pde,
-                                                          epochs=epochs,
-                                                          hidden_units_1=hidden_units_1,
-                                                          hidden_units_2=hidden_units_2,
-                                                          hidden_units_3=hidden_units_3,
-                                                          gamma_1=gamma_1,
-                                                          gamma_2=gamma_2,
-                                                          gamma_3=gamma_3,
-                                                          directory=directory,
-                                                          optimizer=optimizer
-                    )
-                    dict_data[(gamma_1, gamma_2, gamma_3)] = data[acc]
+            dict_data[(gamma_1,gamma_2)] = data[acc]
         
     # Concatenate accuracy data over gamma values
     results = pd.concat(dict_data, axis=1)
     return results
 
 
-def run_2layer_accuracy_plots(pde,
-                              epochs,
-                              acc,
-                              gamma_1_list,
-                              gamma_2_list,
-                              hidden_units_1,
-                              hidden_units_2,
-                              directory,
-                              optimizer
-    ):
+def run_2layer_accuracy_plots(
+    pde,
+    epochs,
+    acc,
+    gamma_1_list,
+    gamma_2_list,
+    hidden_units_1,
+    hidden_units_2,
+    directory,
+    optimizer
+):
     """Plots and saves figures of test or train accuracy for lists of multiple 
     gamma values for Multi-layer perceptron with two hidden layers (MLP2)
     
@@ -153,16 +120,18 @@ def run_2layer_accuracy_plots(pde,
     """
 
     # Load accuracy data
-    data = load_all_accuracy(pde=pde,
-                             epochs=epochs,
-                             acc=acc,
-                             gamma_1_list=gamma_1_list,
-                             gamma_2_list=gamma_2_list,
-                             hidden_units_1=hidden_units_1,
-                             hidden_units_2=hidden_units_2,
-                             directory=directory,
-                             optimizer=optimizer)
-    figures_directory = os.path.join(directory, f"figures/{pde}/2layer/normalized/SGD/")
+    data = load_all_accuracy(
+        pde=pde,
+        epochs=epochs,
+        acc=acc,
+        gamma_1_list=gamma_1_list,
+        gamma_2_list=gamma_2_list,
+        hidden_units_1=hidden_units_1,
+        hidden_units_2=hidden_units_2,
+        directory=directory,
+        optimizer=optimizer
+    )
+    figures_directory = os.path.join(directory, f"figures/{pde}/")
     if not os.path.isdir(figures_directory):
         os.makedirs(figures_directory)
     for gamma_1 in gamma_1_list:
@@ -172,7 +141,7 @@ def run_2layer_accuracy_plots(pde,
         plt.legend(title='$\gamma_2$', loc='best')
         plt.xlabel('Number of Epochs')
         plt.ylabel(acc)
-        plt.yscale('log')
+        #plt.yscale('log')
         plt.grid()
 
         fname = f'plot_{pde}_acc_{acc}_gamma1_{gamma_1}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}'
@@ -188,7 +157,7 @@ def run_2layer_accuracy_plots(pde,
         plt.legend(title='$\gamma_1$', loc='best')
         plt.xlabel('Number of Epochs')
         plt.ylabel(acc)
-        plt.yscale('log')
+        #plt.yscale('log')
         plt.grid()
 
         fname = f'plot_{pde}_acc_{acc}_gamma2_{gamma_2}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}'
@@ -198,141 +167,11 @@ def run_2layer_accuracy_plots(pde,
         plt.close('all')
     return
 
-def run_3layer_accuracy_plots(pde,
-                              epochs,
-                              acc,
-                              gamma_1_list,
-                              gamma_2_list,
-                              gamma_3_list,
-                              hidden_units_1,
-                              hidden_units_2,
-                              hidden_units_3, 
-                              directory,
-                              optimizer
-    ):
-    """Plots and saves figures of test or train accuracy for lists of multiple 
-    gamma values for Multi-layer perceptron with three hidden layers (MLP3)
-    
-    Parameters
-    ----------
-    gamma_1_list: list of floats
-        the mean-field scaling parameters for the first layer 
-    gamma_2_list: list of floats
-        the mean-field scaling parameters for the second layer 
-    gamma_3_list: list of floats
-        the mean-field scaling parameters for the third layer 
-    hidden_units_1: int
-        the number of nodes in the first hidden layer
-    hidden_units_2: int
-        the number of nodes in the second hidden layer
-    hidden_units_3: int
-        the number of nodes in the third hidden layer
-    directory: str
-        location of the data files and figures
-    """
-
-    # Load accuracy data
-    data = load_all_accuracy(pde=pde,
-                             epochs=epochs,
-                             acc=acc,
-                             gamma_1_list=gamma_1_list,
-                             gamma_2_list=gamma_2_list,
-                             gamma_3_list=gamma_3_list,
-                             hidden_units_1=hidden_units_1,
-                             hidden_units_2=hidden_units_2,
-                             hidden_units_3=hidden_units_3,
-                             directory=directory,
-                             optimizer=optimizer)
-    
-    line_styles = ['solid', 'dashed', 'dotted']
-    colors = ['blue', 'green', 'orange']
-    figures_directory = os.path.join(directory, f'figures/{pde}/3layer/normalized/')
-    if not os.path.isdir(figures_directory):
-        os.makedirs(figures_directory)
-    for gamma_1 in gamma_1_list:
-        
-        fig = plt.figure(figsize=(20, 10))
-        
-        legend_labels = []
-        for count_1, gamma_2 in enumerate(gamma_2_list):
-            for count_2, gamma_3 in enumerate(gamma_3_list):
-                legend_labels += [(gamma_2, gamma_3)]
-                plt.plot(data[(gamma_1, gamma_2, gamma_3)],
-                         color=colors[count_1],
-                         linestyle=line_styles[count_2])
-      
-        ax = fig.axes[0]
-        plt.ylabel(acc)
-        ax.set_title(f'{acc} for $\gamma_1={{{gamma_1}}}$ for {pde} pde')
-        plt.legend(legend_labels, title='$(\gamma_2, \gamma_3)$', loc='best', ncol=3)
-        plt.xlabel('Number of Epochs')
-        plt.yscale('log')
-        plt.grid()
-
-        fname = f'plot_{pde}_acc_{acc}_gamma1_{gamma_1}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_hidden3_{hidden_units_3}'
-    
-        fig_path = os.path.join(figures_directory, fname)
-        ax.figure.savefig(fig_path + '.jpg', dpi=300, bbox_inches='tight')
-        plt.close('all')
-    for gamma_2 in gamma_2_list:
-        
-        fig = plt.figure(figsize=(20, 10))
-        
-        legend_labels = []
-        for count_1, gamma_1 in enumerate(gamma_1_list):
-
-            for count_2, gamma_3 in enumerate(gamma_3_list):
-                legend_labels += [(gamma_1, gamma_3)]
-                plt.plot(data[(gamma_1, gamma_2, gamma_3)],
-                         color=colors[count_1],
-                         linestyle=line_styles[count_2])
-
-        ax = fig.axes[0]
-        plt.ylabel(acc)
-        ax.set_title(f'{acc} for $\gamma_2={{{gamma_2}}}$ for {pde} pde')
-        plt.legend(legend_labels, title='$(\gamma_1, \gamma_3)$', loc='best', ncol=3)
-        plt.xlabel('Number of Epochs')
-        plt.yscale('log')
-        plt.grid()
-    
-        fname = f'plot_{pde}_acc_{acc}_gamma2_{gamma_2}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_hidden3_{hidden_units_3}'
-    
-        fig_path = os.path.join(figures_directory, fname)
-        ax.figure.savefig(fig_path + '.jpg', dpi=300, bbox_inches='tight')
-        plt.close('all')
-    for gamma_3 in gamma_3_list:
-        
-        fig = plt.figure(figsize=(20, 10))
-        
-        legend_labels = []
-        for count_1, gamma_1 in enumerate(gamma_1_list):
-            for count_2, gamma_2 in enumerate(gamma_2_list):
-                legend_labels += [(gamma_1, gamma_2)]
-                plt.plot(
-                    data[(gamma_1, gamma_2, gamma_3)],
-                    color=colors[count_1],
-                    linestyle=line_styles[count_2])
-
-        ax = fig.axes[0]
-        plt.ylabel(acc)
-        ax.set_title(f'{acc} for $\gamma_3={{{gamma_3}}}$ for {pde} pde')
-        plt.legend(legend_labels, title='$(\gamma_1, \gamma_2)$', loc='best', ncol=3)
-        plt.xlabel('Number of Epochs')
-        plt.yscale('log')
-        plt.grid()
-
-        fname = f'plot_{pde}_acc_{acc}_gamma3_{gamma_3}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_hidden3_{hidden_units_3}'
-
-        fig_path = os.path.join(figures_directory, fname)
-        ax.figure.savefig(fig_path + '.jpg', dpi=300, bbox_inches='tight')
-        plt.close('all')
-    return
-
 if __name__ == '__main__':
-    pde = "Poisson"
+    pde = "Burgers"
     # "Training Loss", "Test mse loss", "Test_rel_l2_loss"
     acc = "Test mse loss" 
-    gamma_1_list = [0.5, 0.6, 0.7,0.8, 0.9, 1.0]
+    gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     gamma_3_list = [0.5, 0.7, 0.9]
     hidden_units_1 = 100
@@ -340,7 +179,7 @@ if __name__ == '__main__':
     hidden_units_3 = 100
     epochs = 20000
     directory = os.getcwd()
-    optimizer="Adam_with_amsgrad"
+    optimizer="Adam"
     run_2layer_accuracy_plots(pde=pde,
                               epochs=epochs,
                               acc=acc,

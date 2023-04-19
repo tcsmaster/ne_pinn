@@ -1,5 +1,6 @@
 import torch
 import pandas as pd
+import matplotlib.pyplot as plt
 from Poisson_process import PoissonNet
 from utils import *
 
@@ -17,6 +18,8 @@ rel_l2_error = np.zeros_like(mse_error)
 test_data = torch.linspace(-1, 1, 30).reshape(1, -1).T
 true_sol = torch.sin(np.pi*test_data).detach().numpy()
 for gamma_1 in gamma_1_list:
+    fig = plt.figure(figsize=(20, 10))
+    fig.add_subplot((111))
     for gamma_2 in gamma_2_list:
         net = PoissonNet(MLP2(num_input=1,
                               num_output=1,
@@ -34,9 +37,23 @@ for gamma_1 in gamma_1_list:
         pred = pred.detach().numpy()
         mse_error[gamma_2_list.index(gamma_2), gamma_1_list.index(gamma_1)] = mse_vec_error(pred.ravel(), true_sol.ravel())
         rel_l2_error[gamma_2_list.index(gamma_2), gamma_1_list.index(gamma_1)] = l2_relative_loss(pred, true_sol)
-        
+        plt.plot(test_data, pred, label = f"$\gamma_2 = {{{gamma_2}}}$")
+    plt.plot(test_data, true_sol, label="True solution")
+    plt.xlabel("x")
+    plt.ylabel("u")
+    plt.grid()
+    plt.legend(loc="best")
+    plt.title(f"Prediction for $\gamma_1 = {{{gamma_1}}}$")
+    file_name = f"plot_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}"
+    fig_dir = "/content/thesis/figures_test/Poisson_test/"
+    if not os.path.isdir(fig_dir):
+        os.makedirs(fig_dir)
+    plt.savefig(fig_dir + file_name + ".jpg")
+
+"""
 err_dir= f"/content/thesis/Error_tables/{pde}/"
 if not os.path.isdir(err_dir):
     os.makedirs(err_dir)
 pd.DataFrame(mse_error, index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list], columns=[f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]).to_csv(err_dir + f"{optimizer}_mse_table_epochs_{epochs}.csv")
 pd.DataFrame(rel_l2_error, index = [f"gamma_2 = {gamma_1}" for gamma_2 in gamma_2_list], columns=[f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]).to_csv(err_dir + f"{optimizer}_rel_l2_table_epochs_{epochs}.csv")
+"""

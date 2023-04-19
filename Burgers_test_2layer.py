@@ -11,12 +11,12 @@ def rmse_vec_error(pred, target):
     return np.linalg.norm(pred - target) / np.sqrt(len(pred))
 
 pde = "Burgers"
-epochs=1000
+epochs=20000
 hidden_units_1 = 100
 hidden_units_2 = 100
 
-gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9]
-gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9]
+gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
 
 t_space = [0, 0.25, 0.5, 0.75]
@@ -40,7 +40,7 @@ for gamma_1 in gamma_1_list:
                              ),
                              device=torch.device('cpu')
                   )
-            path = os.getcwd()+ f"/results/{pde}/2layer/normalized/loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}_model.pth"
+            path = os.getcwd()+ f"/results/{pde}/2layer/Adam/loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}_model.pth"
             net.model.load_state_dict(torch.load(path,map_location='cpu'))
             net.model.eval()
             with torch.no_grad():
@@ -55,7 +55,7 @@ for gamma_1 in gamma_1_list:
         ax.set_title(f"t={time}")
     plt.suptitle(f"Prediction for $\gamma_1 = {{{gamma_1}}}$")
     file_name = f"plot_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}"
-    fig_dir = "/content/thesis/figures_test/Burgers_test/2layer/"
+    fig_dir = "/content/thesis/figures_test/Burgers_test/"
     if not os.path.isdir(fig_dir):
         os.makedirs(fig_dir)
     plt.savefig(fig_dir + file_name + ".jpg")
