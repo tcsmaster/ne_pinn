@@ -2,7 +2,11 @@ import os
 import numpy as np
 from models import *
 
-def save_results(results, directory, file_name):
+def save_results(
+    results,
+    directory,
+    file_name
+    ):
     if not os.path.isdir(directory):
         os.makedirs(directory)
     extension = '.csv'
@@ -11,18 +15,15 @@ def save_results(results, directory, file_name):
     print("Data successfully saved!")
     return
 
-def generate_file_name(pde,
-                       epochs,
-                       hidden_units_1,
-                       hidden_units_2,
-                       gamma_1,
-                       gamma_2,
-                       hidden_units_3=None,
-                       gamma_3 = None):
-    if not hidden_units_3:
-        file_name = f"loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}"
-    else:
-        file_name = f"loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_hidden3_{hidden_units_3}_gamma1_{gamma_1}_gamma2_{gamma_2}_gamma3_{gamma_3}_epochs_{epochs}"
+def generate_file_name(
+    pde,
+    epochs,
+    hidden_units_1,
+    hidden_units_2,
+    gamma_1,
+    gamma_2
+    ):
+    file_name = f"loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}"
     return file_name
 
 def l2_relative_loss(pred, target):

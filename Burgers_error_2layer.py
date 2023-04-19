@@ -12,16 +12,15 @@ hidden_units_2 = 100
 gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9]
 gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9]
 
-rmse_error = np.zeros((5, 5), dtype=object)
-rel_l2_error = np.zeros((5, 5), dtype=object)
+mse_error = np.zeros((len(gamma_2_list), len(gamma_1_list)), dtype=object)
+rel_l2_error = np.zeros_like(mse_error)
 data = np.load("Burgers.npz")
 t, x, usol = data["t"], data["x"], data["usol"]
-
-for gamma_1 in gamma_1_list:
-    test_data = torch.stack(torch.meshgrid(torch.tensor([x], dtype=torch.float32).squeeze(),
+test_data = torch.stack(torch.meshgrid(torch.tensor([x], dtype=torch.float32).squeeze(),
                                            torch.tensor([t], dtype=torch.float32).squeeze(),
                                            indexing="ij")).reshape(2, -1).T
-    true_sol = usol.reshape(-1, 1)
+true_sol = usol.reshape(-1, 1)
+for gamma_1 in gamma_1_list:
     for gamma_2 in gamma_2_list:
         net = BurgersNet(MLP2(num_input=2,
                                   num_output=1,

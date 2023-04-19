@@ -1,11 +1,11 @@
 import torch
 import pandas as pd
-from Poisson_process import *
+from Poisson_process import PoissonNet
 from utils import *
 
 pde = "Poisson"
 device = torch.device("cpu")
-optimizer = "Adam_with_amsgrad"
+optimizer = "Adam"
 gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 hidden_units_1 = 100
@@ -13,10 +13,10 @@ hidden_units_2 = 100
 epochs=20000
 
 mse_error = np.zeros((len(gamma_2_list), len(gamma_1_list)), dtype=object)
-rel_l2_error = np.zeros((len(gamma_2_list), len(gamma_1_list)), dtype=object)
+rel_l2_error = np.zeros_like(mse_error)
+test_data = torch.linspace(-1, 1, 30).reshape(1, -1).T
+true_sol = torch.sin(np.pi*test_data).detach().numpy()
 for gamma_1 in gamma_1_list:
-    test_data = torch.linspace(-1, 1, 30).reshape(1, -1).T
-    true_sol = torch.sin(np.pi*test_data).detach().numpy()
     for gamma_2 in gamma_2_list:
         net = PoissonNet(MLP2(num_input=1,
                               num_output=1,
