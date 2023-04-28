@@ -5,6 +5,9 @@ from pdes import *
 from utils import *
 
 class BurgersNet():
+    """
+    This is a blueprint of a Physics-Informed Neural Network trying to solve the 1-D Burgers equation.
+    """
     def __init__(self, model, device):
         self.device = device
         self.model=model.to(self.device)
@@ -213,7 +216,7 @@ def main(
 
 if __name__ == '__main__':
     pde='Burgers'
-    gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    gamma_1_list = [0.7, 0.8]
     gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     hidden_units_1=100
     hidden_units_2=100

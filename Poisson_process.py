@@ -61,8 +61,8 @@ def main(
     hidden_units_2:int,
     epochs:int,
     directory:str,
-    mse_table,
-    rel_l2_table
+    mse_error_table,
+    rel_l2_error_table
 ):
     """
     Trains a neural network model on a dataset and saves the resulting 
@@ -134,11 +134,11 @@ def main(
                 epochs=epochs,
                 optimizer=optimizer
             )
-            mse_table[
+            mse_error_table[
                 gamma_2_list.index(gamma_2),
                 gamma_1_list.index(gamma_1)
             ] = results["Test mse loss"].iloc[-1]
-            rel_l2_table[
+            rel_l2_error_table[
                 gamma_2_list.index(gamma_2),
                 gamma_1_list.index(gamma_1)
             ] = results["Test_rel_l2_loss"].iloc[-1]
@@ -165,12 +165,12 @@ def main(
     if not os.path.isdir(err_dir):
         os.makedirs(err_dir)
     pd.DataFrame(
-        mse_table,
+        mse_error_table,
         index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list],
         columns=[f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]
     ).to_csv(err_dir + f"{optimizer.__class__.__name__}_mse_table_epochs_{epochs}.csv")
     pd.DataFrame(
-        rel_l2_table,
+        rel_l2_error_table,
         index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list],
         columns=[f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]
     ).to_csv(err_dir + f"{optimizer.__class__.__name__}_rel_l2_table_epochs_{epochs}.csv")     
@@ -184,8 +184,8 @@ if __name__ == '__main__':
     hidden_units_2=100
     epochs=20000
     directory=os.getcwd()
-    mse_table = np.zeros((len(gamma_2_list), len(gamma_1_list)), dtype=object)
-    rel_l2_table = np.zeros_like(mse_table)    
+    mse_error_table = np.zeros((len(gamma_2_list), len(gamma_1_list)), dtype=object)
+    rel_l2_error_table = np.zeros_like(mse_error_table)    
     main(
         pde=pde,
         gamma_1_list=gamma_1_list,
@@ -194,6 +194,6 @@ if __name__ == '__main__':
         hidden_units_2=hidden_units_2,
         epochs=epochs,
         directory=directory,
-        mse_table=mse_table,
-        rel_l2_table = rel_l2_table
+        mse_error_table=mse_error_table,
+        rel_l2_error_table = rel_l2_error_table
     )
