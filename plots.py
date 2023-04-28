@@ -141,7 +141,8 @@ def run_accuracy_plots(
         plt.legend(title='$\gamma_2$', loc='lower center', bbox_to_anchor = [0.5, -0.3], ncols = len(gamma_2_list))
         plt.xlabel('Number of Epochs')
         plt.ylabel(acc)
-        #plt.yscale('log')
+        if pde=="Poisson":
+            plt.yscale('log')
         plt.grid()
 
         fname = f'plot_{pde}_acc_{acc}_gamma1_{gamma_1}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}'
@@ -157,7 +158,8 @@ def run_accuracy_plots(
         plt.legend(title='$\gamma_1$', loc='lower center', bbox_to_anchor = [0.5, -0.3], ncols = len(gamma_1_list))
         plt.xlabel('Number of Epochs')
         plt.ylabel(acc)
-        #plt.yscale('log')
+        if pde=="Poisson":
+            plt.yscale('log')
         plt.grid()
 
         fname = f'plot_{pde}_acc_{acc}_gamma2_{gamma_2}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}'
@@ -168,7 +170,7 @@ def run_accuracy_plots(
     return
 
 if __name__ == '__main__':
-    pde = "Burgers"
+    pde = "Poisson"
     # "Training Loss", "Test mse loss", "Test_rel_l2_loss"
     acc = "Test mse loss" 
     gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]

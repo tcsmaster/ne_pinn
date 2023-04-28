@@ -5,13 +5,14 @@ from utils import *
 
 class PoissonNet():
     """
-    This class is a blueprint for solving a 1D Poisson equation with Dirichlet BC
+    This class is a blueprint for a Physics-Informed Neural Network intended to
+    solve a 1D Poisson equation with Dirichlet BC and forcing term pi^2*sin(pi*x).
+    The solution is sin(pi*x)
     """
     def __init__(self, model, device):
         self.device=device
-        self.model = model.to(self.device)
+        self.model=model.to(self.device)
  
-    
     def training(
         self,
         X_int_train,
@@ -22,10 +23,11 @@ class PoissonNet():
         epochs,
         optimizer
     ):
-        res = pd.DataFrame(None,
-                           columns = ["Training Loss", "Test mse loss", "Test_rel_l2_loss"],
-                           dtype=float
-              )
+        res = pd.DataFrame(
+            None,
+            columns = ["Training Loss", "Test mse loss", "Test_rel_l2_loss"],
+            dtype=float
+        )
         for e in range(epochs):
             self.model.train()
             optimizer.zero_grad()
@@ -37,17 +39,17 @@ class PoissonNet():
             )
             bc_pred = self.model(X_bc_train)
             loss_bc = MSELoss()(bc_pred, y_bc_train)
-            loss = loss_pde + loss_bc
+            loss = 0.5*(loss_pde + loss_bc)
             loss.backward()
             optimizer.step()
             res.loc[e, "Training Loss"] = loss.item()
             self.model.eval()
             with torch.no_grad():
-                pred = self.model(X_test)
-                mse_loss = mse_vec_error(pred, y_test)
-                rell2_loss = l2_relative_loss(pred, y_test)
-                res.loc[e, "Test mse loss"] = mse_loss
-                res.loc[e, "Test_rel_l2_loss"] = rell2_loss
+                pred=self.model(X_test)
+                mse_loss=mse_vec_error(pred, y_test)
+                rell2_loss=l2_relative_loss(pred, y_test)
+                res.loc[e,"Test mse loss"]=mse_loss
+                res.loc[e,"Test_rel_l2_loss"]=rell2_loss
         return res
 
 
@@ -85,23 +87,10 @@ def main(
     directory: str
         the local where accuracy results and model parameters are saved
         (requires folders 'results' and 'models')
-    """ 
+    """
+    #TODO: update the docstring with the relevant parameters
     print(f"PDE:{pde}")
-    print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, h_1={hidden_units_1}, h_2={hidden_units_2}, epochs={epochs}")
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    net = PoissonNet(
-        MLP2(
-            num_input=1,
-            num_output=1,
-            hidden_units_1=hidden_units_1,
-            hidden_units_2=hidden_units_2,
-            gamma_1=gamma_1,
-            gamma_2=gamma_2
-        ),
-        device=device
-    )
-
-    print(f"Model: {net.model}")
     
     X_int_train = torch.arange(
         -0.9,
@@ -122,6 +111,19 @@ def main(
     y_test = torch.sin(pi*X_test)
     for gamma_1 in gamma_1_list:
         for gamma_2 in gamma_2_list:
+            print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, h_1={hidden_units_1}, h_2={hidden_units_2}, epochs={epochs}")
+            net = PoissonNet(
+                MLP2(
+                    num_input=1,
+                    num_output=1,
+                    hidden_units_1=hidden_units_1,
+                    hidden_units_2=hidden_units_2,
+                    gamma_1=gamma_1,
+                    gamma_2=gamma_2
+                ),
+                device=device
+            )
+            print(f"Model: {net.model}")
             optimizer = Adam(net.model.parameters(), amsgrad=True)
             results = net.training(
                 X_int_train=X_int_train,
@@ -132,6 +134,14 @@ def main(
                 epochs=epochs,
                 optimizer=optimizer
             )
+            mse_table[
+                gamma_2_list.index(gamma_2),
+                gamma_1_list.index(gamma_1)
+            ] = results["Test mse loss"].iloc[-1]
+            rel_l2_table[
+                gamma_2_list.index(gamma_2),
+                gamma_1_list.index(gamma_1)
+            ] = results["Test_rel_l2_loss"].iloc[-1]
             file_name = generate_file_name(
                 pde=pde,
                 epochs=epochs,
@@ -140,32 +150,50 @@ def main(
                 gamma_1=gamma_1,
                 gamma_2=gamma_2
             )
-            results_directory = os.path.join(directory, f'results/{pde}/2layer/{optimizer.__class__.__name__}/')
-            save_results(results=results,
-                 directory=results_directory,
-                 file_name=file_name
-    )
-    path = os.path.join(results_directory, file_name) + '_model.pth'
-    torch.save(net.model.state_dict(), path)
+            results_directory = os.path.join(
+                directory,
+                f'results/{pde}/2layer/{optimizer.__class__.__name__}/'
+            )
+            save_results(
+                results=results,
+                directory=results_directory,
+                file_name=file_name
+            )
+            path = os.path.join(results_directory, file_name) + '_model.pth'
+            torch.save(net.model.state_dict(), path)
+    err_dir= f"/content/thesis/Error_tables/{pde}/"
+    if not os.path.isdir(err_dir):
+        os.makedirs(err_dir)
+    pd.DataFrame(
+        mse_table,
+        index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list],
+        columns=[f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]
+    ).to_csv(err_dir + f"{optimizer.__class__.__name__}_mse_table_epochs_{epochs}.csv")
+    pd.DataFrame(
+        rel_l2_table,
+        index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list],
+        columns=[f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]
+    ).to_csv(err_dir + f"{optimizer.__class__.__name__}_rel_l2_table_epochs_{epochs}.csv")     
     return
 
 if __name__ == '__main__':
     pde='Poisson'
     gamma_1_list = [0.5, 0.6, 0.7,0.8, 0.9, 1.0]
-    gamma_2_list = [0.5, 0.6, 0.7,0.8, 0.9, 1.0]
-    gamma_3_list = [0.5, 0.7, 1.0]
+    gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     hidden_units_1=100
     hidden_units_2=100
-    hidden_units_3=100
     epochs=20000
     directory=os.getcwd()
-    for gamma_1 in gamma_1_list:
-        for gamma_2 in gamma_2_list:     
-            main(pde=pde,
-                    gamma_1=gamma_1,
-                    gamma_2=gamma_2,
-                    hidden_units_1=hidden_units_1,
-                    hidden_units_2=hidden_units_2,
-                    epochs=epochs,
-                    directory=directory
-                )
+    mse_table = np.zeros((len(gamma_2_list), len(gamma_1_list)), dtype=object)
+    rel_l2_table = np.zeros_like(mse_table)    
+    main(
+        pde=pde,
+        gamma_1_list=gamma_1_list,
+        gamma_2_list=gamma_2_list,
+        hidden_units_1=hidden_units_1,
+        hidden_units_2=hidden_units_2,
+        epochs=epochs,
+        directory=directory,
+        mse_table=mse_table,
+        rel_l2_table = rel_l2_table
+    )

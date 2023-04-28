@@ -23,8 +23,7 @@ hidden_units_1 = 100
 hidden_units_2 = 100
 epochs=20000
 
-mse_error = np.zeros((len(gamma_2_list), len(gamma_1_list)), dtype=object)
-rel_l2_error = np.zeros_like(mse_error)
+
 test_data = torch.linspace(-1, 1, 30).reshape(1, -1).T
 true_sol = torch.sin(np.pi*test_data).detach().numpy()
 for gamma_1 in gamma_1_list:
@@ -45,8 +44,6 @@ for gamma_1 in gamma_1_list:
         with torch.no_grad():
             pred = net.model(test_data)
         pred = pred.detach().numpy()
-        mse_error[gamma_2_list.index(gamma_2), gamma_1_list.index(gamma_1)] = mse_vec_error(pred.ravel(), true_sol.ravel())
-        rel_l2_error[gamma_2_list.index(gamma_2), gamma_1_list.index(gamma_1)] = l2_relative_loss(pred, true_sol)
         plt.plot(test_data, pred)
         label_list.append(f"$\gamma_2 = {{{gamma_2}}}$")
     plt.plot(test_data, true_sol)
@@ -61,11 +58,3 @@ for gamma_1 in gamma_1_list:
     if not os.path.isdir(fig_dir):
         os.makedirs(fig_dir)
     plt.savefig(fig_dir + file_name + ".jpg", bbox_inches="tight", dpi=300)
-
-"""
-err_dir= f"/content/thesis/Error_tables/{pde}/"
-if not os.path.isdir(err_dir):
-    os.makedirs(err_dir)
-pd.DataFrame(mse_error, index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list], columns=[f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]).to_csv(err_dir + f"{optimizer}_mse_table_epochs_{epochs}.csv")
-pd.DataFrame(rel_l2_error, index = [f"gamma_2 = {gamma_1}" for gamma_2 in gamma_2_list], columns=[f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]).to_csv(err_dir + f"{optimizer}_rel_l2_table_epochs_{epochs}.csv")
-"""

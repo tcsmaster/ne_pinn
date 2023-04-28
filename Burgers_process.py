@@ -35,7 +35,7 @@ class BurgersNet():
             loss_bc = MSELoss()(bc_pred, y_bc_train)
             ic_pred = self.model(X_ic_train)
             loss_ic = MSELoss()(ic_pred, y_ic_train)
-            loss = loss_pde + loss_bc + loss_ic
+            loss = 0.5*(loss_pde + loss_bc + loss_ic)
             loss.backward()
             optimizer.step()
             res.loc[e, "Training Loss"] = loss.item()
@@ -171,8 +171,14 @@ def main(
                 epochs=epochs,
                 optimizer=optimizer
             )
-            mse_error_table[gamma_2_list.index(gamma_2), gamma_1_list.index(gamma_1)] = results["Test mse loss"].iloc[-1]
-            rel_l2_error_table[gamma_2_list.index(gamma_2), gamma_1_list.index(gamma_1)] = results["Test_rel_l2_loss"].iloc[-1]
+            mse_error_table[
+                gamma_2_list.index(gamma_2),
+                gamma_1_list.index(gamma_1)
+            ] = results["Test mse loss"].iloc[-1]
+            rel_l2_error_table[
+                gamma_2_list.index(gamma_2),
+                gamma_1_list.index(gamma_1)
+            ] = results["Test_rel_l2_loss"].iloc[-1]
             file_name = generate_file_name(
                 pde=pde,
                 epochs=epochs,
@@ -190,19 +196,19 @@ def main(
             )
             path = results_directory + file_name + "_model.pth"
             torch.save(net.model.state_dict(), path)
-    err_dir = f"/content/thesis/error_tables/{pde}/2layer"
+    err_dir = f"/content/thesis/Error_tables/{pde}/"
     if not os.path.isdir(err_dir):
         os.makedirs(err_dir)
     pd.DataFrame(
         mse_error_table,
         index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list],
         columns = [f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]
-    ).to_csv(err_dir + f"/{pde}_2layer_mse_table.csv")
+    ).to_csv(err_dir + f"{optimizer.__class__.__name__}_mse_table_epochs_{epochs}.csv")
     pd.DataFrame(
         rel_l2_error_table,
         index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list],
         columns = [f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]
-    ).to_csv(err_dir + "/Poisson_2layer_rel_l2_table.csv")
+    ).to_csv(err_dir + f"{optimizer.__class__.__name__}_rel_l2_table_epochs_{epochs}.csv")
     return
 
 if __name__ == '__main__':

@@ -41,17 +41,20 @@ class MLP2(nn.Module):
         # Layers
         self.fc1 = nn.Linear(
             self.num_input,
-            self.hidden_units_1
+            self.hidden_units_1,
+            bias=False
         )
         nn.init.normal_(self.fc1.weight, mean=0.0, std=1.0)
         self.fc2 = nn.Linear(
             self.hidden_units_1,
-            self.hidden_units_2
+            self.hidden_units_2,
+            bias=False
         )
         nn.init.normal_(self.fc2.weight, mean=0.0, std=1.0)
         self.fc3 = nn.Linear(
             self.hidden_units_2,
-            self.num_output
+            self.num_output,
+            bias=True
         )
         nn.init.uniform_(self.fc3.weight, a=0.0, b=1.0)
     
