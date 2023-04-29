@@ -14,23 +14,25 @@ plt.rcParams.update({
     })
 
 
-def load_accuracy_for_single_gamma(pde:str,
-                                   epochs:int,
-                                   hidden_units_1:int,
-                                   hidden_units_2:int,
-                                   gamma_1:float,
-                                   gamma_2:float,
-                                   directory:str,
-                                   optimizer:str
-    ):
-    fname = generate_file_name(pde=pde,
-                                   epochs=epochs,
-                                   hidden_units_1=hidden_units_1,
-                                   hidden_units_2=hidden_units_2,
-                                   gamma_1=gamma_1,
-                                   gamma_2=gamma_2
-        )
-    results_folder = f'results/{pde}/2layer/{optimizer}/'
+def load_accuracy_for_single_gamma(
+    pde:str,
+    epochs:int,
+    hidden_units_1:int,
+    hidden_units_2:int,
+    gamma_1:float,
+    gamma_2:float,
+    directory:str,
+    optimizer:str
+):
+    fname = generate_file_name(
+        pde=pde,
+        epochs=epochs,
+        hidden_units_1=hidden_units_1,
+        hidden_units_2=hidden_units_2,
+        gamma_1=gamma_1,
+        gamma_2=gamma_2
+    )
+    results_folder = f'results/{pde}/{optimizer}/'
 
     # Create full path to data file, including extension
     path = os.path.join(directory, results_folder, fname) + '.csv'
@@ -41,16 +43,17 @@ def load_accuracy_for_single_gamma(pde:str,
     return data
 
 
-def load_all_accuracy(pde,
-                      epochs,
-                      acc,
-                      gamma_1_list,
-                      gamma_2_list, 
-                      hidden_units_1,
-                      hidden_units_2,
-                      directory,
-                      optimizer
-    ):
+def load_all_accuracy(
+    pde,
+    epochs,
+    acc,
+    gamma_1_list,
+    gamma_2_list, 
+    hidden_units_1,
+    hidden_units_2,
+    directory,
+    optimizer
+):
     """Returns a DataFrame with either test or train accuracy by epoch for  
     lists of gamma values
     
@@ -77,15 +80,15 @@ def load_all_accuracy(pde,
     for gamma_1 in gamma_1_list:
         for gamma_2 in gamma_2_list:
             data = load_accuracy_for_single_gamma(
-                    pde=pde,
-                    epochs=epochs,
-                    hidden_units_1=hidden_units_1,
-                    hidden_units_2=hidden_units_2,
-                    gamma_1=gamma_1,
-                    gamma_2=gamma_2,
-                    directory=directory,
-                    optimizer=optimizer
-                )
+                pde=pde,
+                epochs=epochs,
+                hidden_units_1=hidden_units_1,
+                hidden_units_2=hidden_units_2,
+                gamma_1=gamma_1,
+                gamma_2=gamma_2,
+                directory=directory,
+                optimizer=optimizer
+            )
             dict_data[(gamma_1,gamma_2)] = data[acc]
         
     # Concatenate accuracy data over gamma values
@@ -170,7 +173,7 @@ def run_accuracy_plots(
     return
 
 if __name__ == '__main__':
-    pde = "Poisson"
+    pde = "Burgers"
     # "Training Loss", "Test mse loss", "Test_rel_l2_loss"
     acc = "Test mse loss" 
     gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]

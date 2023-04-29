@@ -30,14 +30,16 @@ for gamma_1 in gamma_1_list:
     plt.figure(figsize=(20, 10))
     label_list=[]
     for gamma_2 in gamma_2_list:
-        net = PoissonNet(MLP2(num_input=1,
-                              num_output=1,
-                              hidden_units_1=hidden_units_1,
-                              hidden_units_2 = hidden_units_2,
-                              gamma_1 = gamma_1,
-                              gamma_2 = gamma_2
-                         ), device=device
-              )
+        net = PoissonNet(
+            MLP2(
+                num_input=1,
+                num_output=1,
+                hidden_units_1=hidden_units_1,
+                hidden_units_2 = hidden_units_2,
+                gamma_1 = gamma_1,
+                gamma_2 = gamma_2
+            ), device=device
+        )
         path = os.getcwd()+ f"/results/{pde}/2layer/{optimizer}/loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}_model.pth"
         net.model.load_state_dict(torch.load(path,map_location='cpu'))
         net.model.eval()
