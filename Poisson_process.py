@@ -54,7 +54,6 @@ class PoissonNet():
 
 
 def main(
-    pde:str,
     gamma_1_list:list,
     gamma_2_list:list,
     hidden_units_1:int,
@@ -62,35 +61,47 @@ def main(
     epochs:int,
     directory:str,
     mse_error_table,
-    rel_l2_error_table
+    rel_l2_error_table,
+    pde="Poisson"
 ):
     """
-    Trains a neural network model on a dataset and saves the resulting 
-    model accuracy and model parameters to files
+    Trains a neural network model on a dataset and saves the resulting test
+    errors, test metrics and model parameters to files.
     
     Parameters
     ----------
-    pde: str
-        Name of the pde we're trying to solve
-    gamma_1: float
-        the mean-field scaling parameter for the first layer
-    gamma_2: float
-        the mean-field scaling parameter for the second layer
-    gamma_3: float
-        the mean-field scaling parameter for the third layer
-    hidden_units_1: int
-        the number of nodes in the first layer
-    hidden_units_2: int
-        the number of nodes in the second layer
-    hidden_units_3: int
-        the number of nodes in the third layer
-    directory: str
-        the local where accuracy results and model parameters are saved
-        (requires folders 'results' and 'models')
-    """
-    #TODO: update the docstring with the relevant parameters
+        pde: str
+            Name of the pde we're trying to solve
+        gamma_1_list: list
+            the mean-field scaling parameter for the first layer
+        gamma_2_list: list
+            the mean-field scaling parameter for the second layer
+        hidden_units_1: int
+            the number of nodes in the first layer
+        hidden_units_2: int
+            the number of nodes in the second layer
+        epochs: int
+            The number of epochs the networks are training for
+        directory: str
+            The directory where the script runs. If not already existing, additional
+            folders will be created for the results and model parameters in the
+            following fashion:
+            model weights and test errors for individual networks: directory/results/pde/optimizer/
+            final test metrics from all the networks: directory/error_tables/pde/optimizer/
+        mse_error_table: np.ndarray
+            Array that holds the final mean squared error test loss for the networks.
+            Each column corresponds to a fixed gamma_1, while each row corresponds
+            to a fixed gamma_2.
+        rel_l2_error_table: np.ndarray
+            Array that holds the final relative L^2 error test loss for the networks.
+            Each column corresponds to a fixed gamma_1, while each row corresponds
+            to a fixed gamma_2.
+    """ 
     print(f"PDE:{pde}")
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
     
     X_int_train = torch.arange(
         -0.9,
@@ -111,7 +122,10 @@ def main(
     y_test = torch.sin(pi*X_test)
     for gamma_1 in gamma_1_list:
         for gamma_2 in gamma_2_list:
-            print(f"Parameters: g_1={gamma_1}, g_2={gamma_2}, h_1={hidden_units_1}, h_2={hidden_units_2}, epochs={epochs}")
+            print(
+                f'''Parameters: g_1={gamma_1}, g_2={gamma_2},
+                h_1={hidden_units_1}, h_2={hidden_units_2}, epochs={epochs}'''
+            )
             net = PoissonNet(
                 MLP2(
                     num_input=1,
@@ -161,30 +175,36 @@ def main(
             )
             path = os.path.join(results_directory, file_name) + '_model.pth'
             torch.save(net.model.state_dict(), path)
-    err_dir= f"/content/thesis/Error_tables/{pde}/"
+    used_optimizer = optimizer.__class__.__name__
+    err_dir = f"/content/thesis/Error_tables/{pde}/"
     if not os.path.isdir(err_dir):
         os.makedirs(err_dir)
     pd.DataFrame(
         mse_error_table,
         index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list],
-        columns=[f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]
-    ).to_csv(err_dir + f"{optimizer.__class__.__name__}_mse_table_epochs_{epochs}.csv")
+        columns = [f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]
+    ).to_csv(err_dir + f'''{used_optimizer}_mse_table_epochs_{epochs}.csv''')
     pd.DataFrame(
         rel_l2_error_table,
         index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list],
-        columns=[f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]
-    ).to_csv(err_dir + f"{optimizer.__class__.__name__}_rel_l2_table_epochs_{epochs}.csv")     
+        columns = [f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]
+    ).to_csv(err_dir + f'''{used_optimizer}_rel_l2_table_epochs_{epochs}.csv''')
     return
 
 if __name__ == '__main__':
-    pde='Poisson'
     gamma_1_list = [0.5, 0.6, 0.7,0.8, 0.9, 1.0]
     gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     hidden_units_1=100
     hidden_units_2=100
     epochs=20000
     directory=os.getcwd()
-    mse_error_table = np.zeros((len(gamma_2_list), len(gamma_1_list)), dtype=object)
+    mse_error_table = np.zeros(
+        (
+            len(gamma_2_list),
+            len(gamma_1_list)
+        ),
+        dtype=object
+    )
     rel_l2_error_table = np.zeros_like(mse_error_table)    
     main(
         pde=pde,
