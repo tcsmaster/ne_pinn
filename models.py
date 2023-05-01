@@ -1,8 +1,5 @@
 import torch
 import torch.nn as nn
-#import numpy as np
-
-
 
 
 class MLP2(nn.Module):
