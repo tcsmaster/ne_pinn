@@ -6,7 +6,9 @@ from utils import *
 class PoissonNet():
     """
     This class is a blueprint for a Physics-Informed Neural Network intended to
-    solve a 1D Poisson equation with Dirichlet BC and forcing term pi^2*sin(pi*x).
+    solve the Poisson equation
+                -u_xx = pi^2 sin(pi*x) -1 < x < 1
+                u(-1) = u(1) = 0
     The solution is sin(pi*x)
     """
     def __init__(self, model, device):
@@ -32,11 +34,7 @@ class PoissonNet():
             self.model.train()
             optimizer.zero_grad()
             u = self.model(X_int_train)
-            loss_pde = PoissonPDE(
-                X_int_train,
-                u,
-                self.device
-            )
+            loss_pde = PoissonPDE(X_int_train,u,self.device)
             bc_pred = self.model(X_bc_train)
             loss_bc = MSELoss()(bc_pred, y_bc_train)
             loss = 0.5*(loss_pde + loss_bc)
@@ -103,13 +101,7 @@ def main(
     else:
         device = torch.device("cpu")
     
-    X_int_train = torch.arange(
-        -0.9,
-        1.,
-        0.1,
-        device=device,
-        requires_grad=True
-    ).reshape(1, -1).T
+    X_int_train = torch.arange(-0.9,1.,0.1,device=device,requires_grad=True).reshape(1, -1).T
     bc1 = torch.tensor([-1.],device=device)
     bc2 = torch.tensor([1.], device=device)
     X_bc_train = torch.cat([bc1, bc2]).unsqueeze(1)
@@ -137,7 +129,6 @@ def main(
                 ),
                 device=device
             )
-            print(f"Model: {net.model}")
             optimizer = Adam(net.model.parameters(), amsgrad=True)
             results = net.training(
                 X_int_train=X_int_train,
@@ -166,7 +157,7 @@ def main(
             )
             results_directory = os.path.join(
                 directory,
-                f'results/{pde}/2layer/{optimizer.__class__.__name__}/'
+                f'results/{pde}/{optimizer.__class__.__name__}/'
             )
             save_results(
                 results=results,
@@ -192,7 +183,7 @@ def main(
     return
 
 if __name__ == '__main__':
-    gamma_1_list = [0.5, 0.6, 0.7,0.8, 0.9, 1.0]
+    gamma_1_list = [0.6, 0.7, 0.8, 0.9, 1.0]
     gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     hidden_units_1=100
     hidden_units_2=100
@@ -207,7 +198,6 @@ if __name__ == '__main__':
     )
     rel_l2_error_table = np.zeros_like(mse_error_table)    
     main(
-        pde=pde,
         gamma_1_list=gamma_1_list,
         gamma_2_list=gamma_2_list,
         hidden_units_1=hidden_units_1,

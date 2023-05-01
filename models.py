@@ -57,6 +57,9 @@ class MLP2(nn.Module):
         nn.init.uniform_(self.fc3.weight, a=0.0, b=1.0)
     
     def forward(self, x):
+        """
+        Performs the forward pass of the network.
+        """
         scaling_1 = self.hidden_units_1 ** (-self.gamma_1)
         x = scaling_1 * torch.tanh(self.fc1(x))
         scaling_2 = self.hidden_units_2**(-self.gamma_2)
