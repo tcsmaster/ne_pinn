@@ -144,8 +144,7 @@ def run_accuracy_plots(
         plt.legend(title='$\gamma_2$', loc='lower center', bbox_to_anchor = [0.5, -0.3], ncols = len(gamma_2_list))
         plt.xlabel('Number of Epochs')
         plt.ylabel(acc)
-        if pde=="Poisson":
-            plt.yscale('log')
+        plt.yscale('log')
         plt.grid()
 
         fname = f'plot_{pde}_acc_{acc}_gamma1_{gamma_1}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}'
@@ -161,8 +160,7 @@ def run_accuracy_plots(
         plt.legend(title='$\gamma_1$', loc='lower center', bbox_to_anchor = [0.5, -0.3], ncols = len(gamma_1_list))
         plt.xlabel('Number of Epochs')
         plt.ylabel(acc)
-        if pde=="Poisson":
-            plt.yscale('log')
+        plt.yscale('log')
         plt.grid()
 
         fname = f'plot_{pde}_acc_{acc}_gamma2_{gamma_2}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}'
@@ -180,18 +178,20 @@ if __name__ == '__main__':
     gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     hidden_units_1 = 100
     hidden_units_2 = 100
-    epochs = 20000
+    epochs = 40000
     directory = os.getcwd()
     optimizer="Adam"
-    run_accuracy_plots(pde=pde,
-                              epochs=epochs,
-                              acc=acc,
-                              gamma_1_list = gamma_1_list,
-                              gamma_2_list = gamma_2_list,
-                              hidden_units_1 = hidden_units_1,
-                              hidden_units_2 = hidden_units_2,
-                              directory=directory,
-                              optimizer=optimizer)
+    run_accuracy_plots(
+        pde=pde,
+        epochs=epochs,
+        acc=acc,
+        gamma_1_list = gamma_1_list,
+        gamma_2_list = gamma_2_list,
+        hidden_units_1 = hidden_units_1,
+        hidden_units_2 = hidden_units_2,
+        directory=directory,
+        optimizer=optimizer
+    )
 
 
 

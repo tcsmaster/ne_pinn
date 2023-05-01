@@ -29,8 +29,8 @@ def PoissonPDE(x, u, device):
 
 def BurgersPDE(x, u, device):
     du_dX = torch.autograd.grad(
-        x,
         u,
+        x,
         torch.ones_like(u,device=device),
         create_graph=True,
         retain_graph=True
@@ -38,8 +38,8 @@ def BurgersPDE(x, u, device):
     du_dx = du_dX[:,0:1]
     du_dt = du_dX[:,1:2]
     du_dxx = torch.autograd.grad(
-        x,
         du_dx,
+        x,
         torch.ones_like(du_dx,device=device),
         retain_graph=True,
         create_graph=True

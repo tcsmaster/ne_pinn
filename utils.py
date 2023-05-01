@@ -29,8 +29,7 @@ def generate_file_name(
     """
     Generates a filename for the test loss and model parameter files.
     """
-    file_name = f'''loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}
-    _gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}'''
+    file_name = f'''loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}'''
     return file_name
 
 def l2_relative_loss(pred, target):
