@@ -10,6 +10,18 @@ class PoissonNet():
                 -u_xx = pi^2 sin(pi*x) -1 < x < 1
                 u(-1) = u(1) = 0
     The solution is sin(pi*x)
+    Attributes:
+    -----------
+    model:
+        A 2-layer feedforward neural network, instance of the MLP2 class.
+    device:
+        The computing device, where the training of the PINN happens.
+        GPU if available, CPU otherwise.
+
+    Methods:
+    --------
+    training:
+        Trains the model with the given data and optimizer
     """
     def __init__(self, model, device):
         self.device=device
@@ -25,6 +37,29 @@ class PoissonNet():
         epochs,
         optimizer
     ):
+        """
+        Trains a neural network with a given optimizer for the given epochs,
+        returns a pandas DataFrame with the PINN training loss, mean squared error
+        and relative L²-error over the test dataset.
+
+        Parameters:
+        -----------
+
+            X_int_train: torch.tensor
+                Tensor that contains the PDE residual points
+            X_bc_train: torch.tensor
+                Tensor containing the boundary training data points
+            y_bc_train: torch.tensor
+                Tensor containing the lables for X_bc_train
+            X_test:torch.tensor
+                Tensor containing the test data
+            y_test:torch.tensor
+                tensor containing the labels for X_test
+            epochs:int
+                the number of epochs the network is going to train
+            optimizer:pytorch.optim.Optimizer
+                Optimizer used for updating the weights of the network.
+        """
         res = pd.DataFrame(
             None,
             columns = ["Training Loss", "Test mse loss", "Test_rel_l2_loss"],
@@ -34,6 +69,7 @@ class PoissonNet():
             self.model.train()
             optimizer.zero_grad()
             u = self.model(X_int_train)
+            # Calculate the PDE-residual
             loss_pde = PoissonPDE(X_int_train,u,self.device)
             bc_pred = self.model(X_bc_train)
             loss_bc = MSELoss()(bc_pred, y_bc_train)
@@ -94,6 +130,11 @@ def main(
             Array that holds the final relative L^2 error test loss for the networks.
             Each column corresponds to a fixed gamma_1, while each row corresponds
             to a fixed gamma_2.
+    
+    Keyword arguments:
+    pde: str
+        Name of the pde we're trying to solve. Used for file and folder naming.
+        Defaults to "Poisson"
     """ 
     print(f"PDE:{pde}")
     if torch.cuda.is_available():

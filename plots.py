@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from utils import generate_file_name
 
-plt.rcParams.update({
+plt.rcParams.update({           # Matplotlib parameter setting
     "font.monospace": [],
     "figure.figsize": (12,8),
     "axes.labelsize": 20,           
@@ -14,16 +14,19 @@ plt.rcParams.update({
     })
 
 
-def load_accuracy_for_single_gamma(
-    pde:str,
-    epochs:int,
-    hidden_units_1:int,
-    hidden_units_2:int,
-    gamma_1:float,
-    gamma_2:float,
-    directory:str,
-    optimizer:str
+def load_loss_for_single_gamma(
+    pde,
+    epochs,
+    hidden_units_1,
+    hidden_units_2,
+    gamma_1,
+    gamma_2,
+    directory,
+    optimizer
 ):
+    """
+    Loads a type of loss for a single pair of gamma_1 and gamma_2 from the directory
+    """
     fname = generate_file_name(
         pde=pde,
         epochs=epochs,
@@ -43,7 +46,7 @@ def load_accuracy_for_single_gamma(
     return data
 
 
-def load_all_accuracy(
+def load_all_losses(
     pde,
     epochs,
     acc,
@@ -60,26 +63,22 @@ def load_all_accuracy(
     Parameters
     ----------
     gamma_1_list: list of floats
-        the mean-field scaling parameters for the first layer
+        the scaling parameters for the first layer
     gamma_2_list: list of floats
-        the mean-field scaling parameters for the second layer
-    gamma_3_list: list of floats
-        the mean-field scaling parameters for the third layer
+        the scaling parameters for the second layer
     hidden_units_1: int
         the number of nodes in the first hidden layer
     hidden_units_2: int
         the number of nodes in the second hidden layer
-    hidden_units_3: int
-        the number of nodes in the third hidden layer
     """
 
     # Dictionary to store data by different gamma_1
     dict_data = dict()
 
-    # Iterate over list of gamma values and load accuracy data
+    # Iterate over list of gamma values and load data
     for gamma_1 in gamma_1_list:
         for gamma_2 in gamma_2_list:
-            data = load_accuracy_for_single_gamma(
+            data = load_loss_for_single_gamma(
                 pde=pde,
                 epochs=epochs,
                 hidden_units_1=hidden_units_1,
@@ -91,7 +90,7 @@ def load_all_accuracy(
             )
             dict_data[(gamma_1,gamma_2)] = data[acc]
         
-    # Concatenate accuracy data over gamma values
+    # Concatenate loss data over gamma values
     results = pd.concat(dict_data, axis=1)
     return results
 
@@ -123,7 +122,7 @@ def run_accuracy_plots(
     """
 
     # Load accuracy data
-    data = load_all_accuracy(
+    data = load_all_losses(
         pde=pde,
         epochs=epochs,
         acc=acc,

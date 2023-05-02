@@ -4,6 +4,10 @@ import matplotlib.pyplot as plt
 from Poisson_process import PoissonNet
 from utils import *
 
+"""
+This script creates a prediction over the test data, plots the result with the true solution,
+and saves the plots in the folder prediction_figures/Poisson
+"""
 plt.rcParams.update({
     "font.monospace": [],
     "figure.figsize": (12,8),
@@ -23,7 +27,7 @@ hidden_units_1 = 100
 hidden_units_2 = 100
 epochs=20000
 
-
+# Test data to predict on
 test_data = torch.linspace(-1, 1, 30).reshape(1, -1).T
 true_sol = torch.sin(np.pi*test_data).detach().numpy()
 for gamma_1 in gamma_1_list:
@@ -40,6 +44,7 @@ for gamma_1 in gamma_1_list:
                 gamma_2 = gamma_2
             ), device=device
         )
+        # For prediction, load the model on the CPU
         path = os.getcwd()+ f"/results/{pde}/{optimizer}/loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}_model.pth"
         net.model.load_state_dict(torch.load(path,map_location='cpu'))
         net.model.eval()
@@ -55,8 +60,9 @@ for gamma_1 in gamma_1_list:
     plt.grid()
     plt.legend(label_list, loc='lower center', bbox_to_anchor = [0.5, -0.2], ncols = len(label_list))
     plt.title(f"Prediction for $\gamma_1 = {{{gamma_1}}}$")
-    file_name = f"plot_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}"
-    fig_dir = "/content/thesis/figures_test/Poisson_test/"
+    # create filename and save the plot
+    file_name = f"plot_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}.jpg"
+    fig_dir = f"/content/thesis/prediction_figures/{pde}/"
     if not os.path.isdir(fig_dir):
         os.makedirs(fig_dir)
-    plt.savefig(fig_dir + file_name + ".jpg", bbox_inches="tight", dpi=300)
+    plt.savefig(fig_dir + file_name, bbox_inches="tight", dpi=300)

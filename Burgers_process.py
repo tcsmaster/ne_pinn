@@ -6,11 +6,25 @@ from utils import *
 
 class BurgersNet():
     """
-    This is a blueprint of a Physics-Informed Neural Network to solve the 
-    following 1-D Burgers equation:
-        u_t + u*u_x = 0.01/pi u_xx   -1 < x < 1  ,  0 < t < 1
-            u(x, 0) = sin(pi*x)      -1 < x < 1
-            u(t,-1) = u(t, 1) = 0     0 < t < 1 
+    An instance of a Physics-Informed Neural Network to solve the 
+    Burgers-equation with the following boundary and initial conditions:
+        u_t + u*u_x = 0.01/pi*u_xx   -1 < x < 1  ,  0 < t < 1
+            u(x, 0) = -sin(pi*x)      -1 < x < 1
+            u(t,-1) = u(t, 1) = 0     0 < t < 1
+
+    Attributes:
+    -----------
+
+    model:
+        A 2-layer feedforward neural network, instance of the MLP2 class.
+    device:
+        The computing device, where the training of the PINN happens.
+        GPU if available, CPU otherwise.
+
+    Methods:
+    --------
+    training:
+        Trains the model with the given data and optimizer
     """
     def __init__(self, model, device):
         self.device = device
@@ -29,14 +43,31 @@ class BurgersNet():
         optimizer
     ):
         """
-        Trains a neural network with a given optimizer, and logs the test losses.
+        Trains a neural network with a given optimizer for the given epochs,
+        returns a pandas DataFrame with the PINN training loss, mean squared error
+        and relative L²-error over the test dataset.
 
         Parameters:
         -----------
 
             X_int_train: torch.tensor
                 Tensor that contains the PDE residual points
-            
+            X_bc_train: torch.tensor
+                Tensor containing the boundary training data points
+            y_bc_train: torch.tensor
+                Tensor containing the lables for X_bc_train
+            X_ic_train: torch.tensor
+                Tensor containing initial condition training data
+            y_ic_train: torch.tensor
+                Tensor containing the labels for X_ic_train
+            X_test:torch.tensor
+                Tensor containing the test data
+            y_test:torch.tensor
+                tensor containing the labels for X_test
+            epochs:int
+                the number of epochs the network is going to train
+            optimizer:pytorch.optim.Optimizer
+                Optimizer used for updating the weights of the network.
         """
         res = pd.DataFrame(
             None,
@@ -80,12 +111,10 @@ def main(
 ):
     """
     Trains a neural network model on a dataset and saves the resulting test
-    errors, test metrics and model parameters to files.
+    errors, test metrics and model parameters to files. Returns None
     
     Parameters
     ----------
-    pde: str
-        Name of the pde we're trying to solve
     gamma_1_list: list
         the mean-field scaling parameter for the first layer
     gamma_2_list: list
@@ -110,6 +139,11 @@ def main(
         Array that holds the final relative L^2 error test loss for the networks.
         Each column corresponds to a fixed gamma_1, while each row corresponds
         to a fixed gamma_2.
+    
+    Keyword arguments:
+    pde: str
+        Name of the pde we're trying to solve. Used for file and folder naming.
+        Defaults to "Burgers"
     """ 
     print(f"PDE:Burgers")
     if torch.cuda.is_available():
@@ -119,6 +153,7 @@ def main(
     h = 0.05
     x = torch.arange(-1, 1 + h, h, device=device)
     t = torch.arange(0, 1 + h, h, device=device)
+    # only include the inner points for the residual training data
     X_int_train = torch.stack(torch.meshgrid(
         x[1:-1],
         t[1:-1],
@@ -130,16 +165,20 @@ def main(
     bc1 = torch.stack(torch.meshgrid(x[0],t,indexing='ij')).reshape(2, -1).T
     bc2 = torch.stack(torch.meshgrid(x[-1],t,indexing='ij')).reshape(2, -1).T
     X_bc_train = torch.cat([bc1, bc2])
+
     y_bc1 = torch.zeros(len(bc1), device=device)
     y_bc2 = torch.zeros(len(bc2), device=device)
     y_bc_train = torch.cat([y_bc1, y_bc2]).unsqueeze(1)
+
     X_ic_train = torch.stack(
         torch.meshgrid(x,t[0],indexing='ij')
     ).reshape(2, -1).T      
     y_ic_train = -torch.sin(np.pi * X_ic_train[:, 0]).unsqueeze(1)
 
+    # testing data obtained from simulation
     data = np.load("Burgers.npz")
     t, x, usol = data["t"], data["x"], data["usol"]
+
     X_test = torch.stack(
         torch.meshgrid(
             torch.tensor([x],dtype=torch.float32,device=device).squeeze(),
@@ -168,7 +207,7 @@ def main(
             )
             optimizer = Adam(net.model.parameters(), amsgrad=True)
             results = net.training(
-                X_int_train = X_int_train,
+                X_int_train=X_int_train,
                 X_bc_train=X_bc_train,
                 y_bc_train=y_bc_train,
                 X_ic_train=X_ic_train,
@@ -178,6 +217,7 @@ def main(
                 epochs=epochs,
                 optimizer=optimizer
             )
+            # save the final metrics into the arrays
             mse_error_table[
                 gamma_2_list.index(gamma_2),
                 gamma_1_list.index(gamma_1)
@@ -194,6 +234,7 @@ def main(
                 gamma_1=gamma_1,
                 gamma_2=gamma_2
             )
+            # save the dataframes and the model parameters
             place = f'results/{pde}/{optimizer.__class__.__name__}/'
             results_directory = os.path.join(directory, place)
             save_results(
@@ -203,6 +244,7 @@ def main(
             )
             path = results_directory + file_name + "_model.pth"
             torch.save(net.model.state_dict(), path)
+    # save the final metrics as DataFrames
     used_optimizer = optimizer.__class__.__name__
     err_dir = f"/content/thesis/Error_tables/{pde}/"
     if not os.path.isdir(err_dir):
@@ -211,17 +253,17 @@ def main(
         mse_error_table,
         index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list],
         columns = [f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]
-    ).to_csv(err_dir + f'''{used_optimizer}_mse_table_epochs_{epochs}.csv''')
+    ).to_csv(err_dir + f"{used_optimizer}_mse_table_epochs_{epochs}.csv")
     pd.DataFrame(
         rel_l2_error_table,
         index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list],
         columns = [f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]
-    ).to_csv(err_dir + f'''{used_optimizer}_rel_l2_table_epochs_{epochs}.csv''')
+    ).to_csv(err_dir + f"{used_optimizer}_rel_l2_table_epochs_{epochs}.csv")
     return
 
 if __name__ == '__main__':
-    gamma_1_list = [0.7]
-    gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    gamma_1_list=[0.5]
+    gamma_2_list=[0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     hidden_units_1=100
     hidden_units_2=100
     epochs = 40000

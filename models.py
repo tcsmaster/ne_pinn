@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 
-
 class MLP2(nn.Module):
     """
     Multi-layer perceptron with two hidden layers.
