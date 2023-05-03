@@ -12,16 +12,9 @@ def save_results(
     """
     if not os.path.isdir(directory):
         os.makedirs(directory)
-    if isinstance(content, pd.DataFrame):
-        extension = '.csv'
-        file_path = os.path.join(directory, file_name) + extension
-        content.to_csv(file_path)
-    elif isinstance(content, matplotlib.figure.Figure):
-        extension = '.jpg'
-        file_path = os.path.join(directory, file_name) + extension
-        content.savefig(file_path, bbox_inches="tight", dpi=300)
-    else:
-        raise ValueError("Implementation for this type of content is not implemented yet!")
+    extension = '.csv'
+    file_path = os.path.join(directory, file_name) + extension
+    content.to_csv(file_path)
     print("Data successfully saved!")
     return
 
