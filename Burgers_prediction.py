@@ -16,7 +16,7 @@ plt.rcParams.update({
 })
 
 pde = "Burgers"
-epochs=20000
+epochs=40000
 hidden_units_1 = 100
 hidden_units_2 = 100
 optimizer="Adam"
@@ -78,7 +78,7 @@ for gamma_1 in gamma_1_list:
     )
     fig.tight_layout()
     file_name = f"plot_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}"
-    fig_dir = "/content/thesis/figures_test/Burgers/"
+    fig_dir = "/content/thesis/prediction_figuresfigures/{pde}/"
     if not os.path.isdir(fig_dir):
         os.makedirs(fig_dir)
     plt.savefig(fig_dir + file_name + ".jpg",  bbox_inches="tight", dpi=300)
