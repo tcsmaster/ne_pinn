@@ -238,7 +238,7 @@ def main(
             place = f'results/{pde}/{optimizer.__class__.__name__}/'
             results_directory = os.path.join(directory, place)
             save_results(
-                results=results,
+                content=results,
                 directory=results_directory,
                 file_name=file_name
             )
@@ -262,7 +262,7 @@ def main(
     return
 
 if __name__ == '__main__':
-    gamma_1_list=[0.5]
+    gamma_1_list=[0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     gamma_2_list=[0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     hidden_units_1=100
     hidden_units_2=100
