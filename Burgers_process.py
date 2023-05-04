@@ -115,37 +115,37 @@ def main(
     
     Parameters
     ----------
-    gamma_1_list: list
-        the mean-field scaling parameter for the first layer
-    gamma_2_list: list
-        the mean-field scaling parameter for the second layer
-    hidden_units_1: int
-        the number of nodes in the first layer
-    hidden_units_2: int
-        the number of nodes in the second layer
-    epochs: int
-        The number of epochs the networks are training for
-    directory: str
-        The directory where the script runs. If not already existing, additional
-        folders will be created for the results and model parameters in the
-        following fashion:
-        model weights and test errors for individual networks: directory/results/pde/optimizer/
-        final test metrics from all the networks: directory/error_tables/pde/optimizer/
-    mse_error_table: np.ndarray
-        Array that holds the final mean squared error test loss for the networks.
-        Each column corresponds to a fixed gamma_1, while each row corresponds
-        to a fixed gamma_2.
-    rel_l2_error_table: np.ndarray
-        Array that holds the final relative L^2 error test loss for the networks.
-        Each column corresponds to a fixed gamma_1, while each row corresponds
-        to a fixed gamma_2.
+        gamma_1_list: list
+            the mean-field scaling parameter for the first layer
+        gamma_2_list: list  
+            the mean-field scaling parameter for the second layer
+        hidden_units_1: int
+            the number of nodes in the first layer
+        hidden_units_2: int
+            the number of nodes in the second layer
+        epochs: int
+            The number of epochs the networks are training for
+        directory: str
+            The directory where the script runs. If not already existing, additional
+            folders will be created for the results and model parameters in the
+            following fashion:
+            model weights and test errors for individual networks: directory/results/pde/optimizer/
+            final test metrics from all the networks: directory/error_tables/pde/optimizer/
+        mse_error_table: np.ndarray
+            Array that holds the final mean squared error test loss for the networks.
+            Each column corresponds to a fixed gamma_1, while each row corresponds
+            to a fixed gamma_2.
+        rel_l2_error_table: np.ndarray
+            Array that holds the final relative L^2 error test loss for the networks.
+            Each column corresponds to a fixed gamma_1, while each row corresponds
+            to a fixed gamma_2.
     
-    Keyword arguments:
-    pde: str
-        Name of the pde we're trying to solve. Used for file and folder naming.
-        Defaults to "Burgers"
+        Keyword arguments:
+        pde: str
+            The pde that is to be solved. Used for file and folder naming.
+            Defaults to "Burgers"
     """ 
-    print(f"PDE:Burgers")
+    print(f"PDE:{pde}")
     if torch.cuda.is_available():
         device = torch.device('cuda')
     else:
@@ -262,8 +262,8 @@ def main(
     return
 
 if __name__ == '__main__':
-    gamma_1_list=[0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    gamma_2_list=[0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    gamma_1_list=[0.7]
+    gamma_2_list=[0.9]
     hidden_units_1=100
     hidden_units_2=100
     epochs = 40000

@@ -44,7 +44,6 @@ class PoissonNet():
 
         Parameters:
         -----------
-
             X_int_train: torch.tensor
                 Tensor that contains the PDE residual points
             X_bc_train: torch.tensor
@@ -88,12 +87,12 @@ class PoissonNet():
 
 
 def main(
-    gamma_1_list:list,
-    gamma_2_list:list,
-    hidden_units_1:int,
-    hidden_units_2:int,
-    epochs:int,
-    directory:str,
+    gamma_1_list,
+    gamma_2_list,
+    hidden_units_1,
+    hidden_units_2,
+    epochs,
+    directory,
     mse_error_table,
     rel_l2_error_table,
     pde="Poisson"
@@ -104,8 +103,6 @@ def main(
     
     Parameters
     ----------
-        pde: str
-            Name of the pde we're trying to solve
         gamma_1_list: list
             the mean-field scaling parameter for the first layer
         gamma_2_list: list
@@ -120,8 +117,10 @@ def main(
             The directory where the script runs. If not already existing, additional
             folders will be created for the results and model parameters in the
             following fashion:
-            model weights and test errors for individual networks: directory/results/pde/optimizer/
-            final test metrics from all the networks: directory/error_tables/pde/optimizer/
+            model weights and test errors for individual networks:
+                directory/results/pde/optimizer/
+            final test metrics from all the networks:
+                directory/error_tables/pde/optimizer/
         mse_error_table: np.ndarray
             Array that holds the final mean squared error test loss for the networks.
             Each column corresponds to a fixed gamma_1, while each row corresponds

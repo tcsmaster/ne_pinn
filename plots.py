@@ -26,6 +26,13 @@ def load_loss_for_single_gamma(
 ):
     """
     Loads a type of loss for a single pair of gamma_1 and gamma_2 from the directory
+    directory/results/pde/optimizer.
+
+    Arguments:
+    ----------
+
+    pde: str
+        The pde that is to be solved
     """
     fname = generate_file_name(
         pde=pde,
@@ -133,20 +140,27 @@ def run_accuracy_plots(
         directory=directory,
         optimizer=optimizer
     )
-    figures_directory = os.path.join(directory, f"figures/{pde}/")
+    figures_directory = os.path.join(directory, f"figures/{pde}/{acc}/")
     if not os.path.isdir(figures_directory):
         os.makedirs(figures_directory)
     for gamma_1 in gamma_1_list:
         fig = plt.figure(figsize=(20, 10))
         ax = data[gamma_1].plot()
-        ax.set_title(f'{acc} for $\gamma_1={{{gamma_1}}}$ for {pde} pde')
+        if acc == "Training Loss":
+            ax.set_title(f'Training loss for $\gamma_1={{{gamma_1}}}$')
+        elif acc == "Test mse loss":
+            ax.set_title(f'Test MSE-loss for $\gamma_1={{{gamma_1}}}$')
+        elif acc == "Test_rel_l2_loss":
+            ax.set_title(f'Relative $L^2$-loss for $\gamma_1={{{gamma_1}}}$')
+        else:
+            raise ValueError("This metric is not available!")
         plt.legend(title='$\gamma_2$', loc='lower center', bbox_to_anchor = [0.5, -0.3], ncols = len(gamma_2_list))
         plt.xlabel('Number of Epochs')
-        plt.ylabel(acc)
+        plt.ylabel("Loss")
         plt.yscale('log')
         plt.grid()
 
-        fname = f'plot_{pde}_acc_{acc}_gamma1_{gamma_1}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}'
+        fname = f'plot_gamma1_{gamma_1}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}'
 
         fig_path = os.path.join(figures_directory, fname)       
         ax.figure.savefig(fig_path + '.jpg', dpi=300, bbox_inches='tight')
@@ -155,14 +169,22 @@ def run_accuracy_plots(
     for gamma_2 in gamma_2_list:
         fig = plt.figure(figsize=(20, 10))
         ax = data.xs(gamma_2, level=1, axis=1).plot()
-        ax.set_title(f'{acc} for $\gamma_2={{{gamma_2}}}$')
+        if acc == "Training Loss":
+            ax.set_title(f'Training loss for $\gamma_2={{{gamma_2}}}$')
+        elif acc == "Test mse loss":
+            ax.set_title(f'Test MSE-loss for $\gamma_2={{{gamma_2}}}$')
+        elif acc == "Test_rel_l2_loss":
+            ax.set_title(f'Relative $L^2$-loss for $\gamma_2={{{gamma_2}}}$')
+        else:
+            raise ValueError("This metric is not available!")
         plt.legend(title='$\gamma_1$', loc='lower center', bbox_to_anchor = [0.5, -0.3], ncols = len(gamma_1_list))
         plt.xlabel('Number of Epochs')
-        plt.ylabel(acc)
-        plt.yscale('log')
+        plt.ylabel("Loss")
+        if pde == "Poisson":
+            plt.yscale('log')
         plt.grid()
 
-        fname = f'plot_{pde}_acc_{acc}_gamma2_{gamma_2}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}'
+        fname = f'plot_gamma2_{gamma_2}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}'
 
         fig_path = os.path.join(figures_directory, fname)
         ax.figure.savefig(fig_path + '.jpg', dpi=300, bbox_inches='tight')
