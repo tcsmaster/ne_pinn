@@ -98,8 +98,8 @@ def main(
     pde="Poisson"
 ):
     """
-    Trains a neural network model on a dataset and saves the resulting test
-    errors, test metrics and model parameters to files.
+    Trains a neural network model on predicting the solution of a Poisson-equation
+    and saves the resulting training and test metrics and model parameters to files.
     
     Parameters
     ----------
@@ -200,7 +200,7 @@ def main(
                 f'results/{pde}/{optimizer.__class__.__name__}/'
             )
             save_results(
-                results=results,
+                content=results,
                 directory=results_directory,
                 file_name=file_name
             )
@@ -223,10 +223,10 @@ def main(
     return
 
 if __name__ == '__main__':
-    gamma_1_list = [0.6, 0.7, 0.8, 0.9, 1.0]
+    gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    hidden_units_1=100
-    hidden_units_2=100
+    hidden_units_1=500
+    hidden_units_2=500
     epochs=20000
     directory=os.getcwd()
     mse_error_table = np.zeros(
