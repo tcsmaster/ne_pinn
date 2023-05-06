@@ -262,8 +262,8 @@ def main(
     return
 
 if __name__ == '__main__':
-    gamma_1_list=[0.7]
-    gamma_2_list=[0.9]
+    gamma_1_list=[1.0]
+    gamma_2_list=[0.7, 0.8, 0.9, 1.0]
     hidden_units_1=100
     hidden_units_2=100
     epochs = 40000
