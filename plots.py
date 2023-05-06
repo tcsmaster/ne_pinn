@@ -192,14 +192,14 @@ def run_accuracy_plots(
     return
 
 if __name__ == '__main__':
-    pde = "Poisson"
+    pde = "Burgers"
     # "Training Loss", "Test mse loss", "Test_rel_l2_loss"
     acc = "Test mse loss" 
-    gamma_1_list = [0.5]
+    gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     hidden_units_1 = 100
     hidden_units_2 = 100
-    epochs = 20000
+    epochs = 40000
     directory = os.getcwd()
     optimizer="Adam"
     run_accuracy_plots(
