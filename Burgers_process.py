@@ -263,9 +263,9 @@ def main(
 
 if __name__ == '__main__':
     gamma_1_list=[1.0]
-    gamma_2_list=[0.7, 0.8, 0.9, 1.0]
-    hidden_units_1=100
-    hidden_units_2=100
+    gamma_2_list=[1.0]
+    hidden_units_1=500
+    hidden_units_2=500
     epochs = 40000
     directory=os.getcwd()
     mse_error_table = np.zeros(
