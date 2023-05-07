@@ -157,7 +157,8 @@ def run_accuracy_plots(
         plt.legend(title='$\gamma_2$', loc='lower center', bbox_to_anchor = [0.5, -0.3], ncols = len(gamma_2_list))
         plt.xlabel('Number of Epochs')
         plt.ylabel("Loss")
-        plt.yscale('log')
+        if pde=="Poisson":
+            plt.yscale('log')
         plt.grid()
 
         fname = f'plot_gamma1_{gamma_1}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}'
@@ -197,8 +198,8 @@ if __name__ == '__main__':
     acc = "Test mse loss" 
     gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    hidden_units_1 = 100
-    hidden_units_2 = 100
+    hidden_units_1 = 500
+    hidden_units_2 = 500
     epochs = 40000
     directory = os.getcwd()
     optimizer="Adam"
