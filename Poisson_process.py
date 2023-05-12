@@ -169,7 +169,7 @@ def main(
                 ),
                 device=device
             )
-            optimizer = Adam(net.model.parameters())
+            optimizer = Adam(net.model.parameters(), amsgrad=True)
             results = net.training(
                 X_int_train=X_int_train,
                 X_bc_train=X_bc_train,
@@ -214,12 +214,12 @@ def main(
         mse_error_table,
         index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list],
         columns = [f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]
-    ).to_csv(err_dir + f'''{used_optimizer}_mse_table_epochs_{epochs}.csv''')
+    ).to_csv(err_dir + f'''{used_optimizer}_mse_table_epochs_{epochs}_width_{hidden_units_1}.csv''')
     pd.DataFrame(
         rel_l2_error_table,
         index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list],
         columns = [f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]
-    ).to_csv(err_dir + f'''{used_optimizer}_rel_l2_table_epochs_{epochs}.csv''')
+    ).to_csv(err_dir + f'''{used_optimizer}_rel_l2_table_epochs_{epochs}_width_{hidden_units_1}.csv''')
     return
 
 if __name__ == '__main__':
