@@ -90,7 +90,7 @@ class BurgersNet():
             self.model.eval()
             with torch.no_grad():
                 pred = self.model(X_test)
-                pred = pred.cpu().detach().numpy()
+                pred = pred.cpu().numpy()
                 rmse_loss = mse_vec_error(pred, y_test)
                 rell2_loss = l2_relative_loss(pred, y_test)
                 res.loc[e, "Test mse loss"] = rmse_loss
@@ -262,10 +262,10 @@ def main(
     return
 
 if __name__ == '__main__':
-    gamma_1_list=[1.0]
-    gamma_2_list=[1.0]
-    hidden_units_1=500
-    hidden_units_2=500
+    gamma_1_list=[0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    gamma_2_list=[0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    hidden_units_1=1000
+    hidden_units_2=1000
     epochs = 40000
     directory=os.getcwd()
     mse_error_table = np.zeros(
