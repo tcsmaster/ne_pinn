@@ -91,9 +91,9 @@ class BurgersNet():
             with torch.no_grad():
                 pred = self.model(X_test)
                 pred = pred.cpu().numpy()
-                rmse_loss = mse_vec_error(pred, y_test)
+                mse_loss = mse_vec_error(pred, y_test)
                 rell2_loss = l2_relative_loss(pred, y_test)
-                res.loc[e, "Test mse loss"] = rmse_loss
+                res.loc[e, "Test mse loss"] = mse_loss
                 res.loc[e, "Test_rel_l2_loss"] = rell2_loss
         return res
 
@@ -187,6 +187,9 @@ def main(
         )
     ).reshape(2, -1).T
     y_test = usol.reshape(-1, 1)
+    
+    place = f'results/{pde}/width_{hidden_units_1}/'
+    results_directory = os.path.join(directory, place)
 
     for gamma_1 in gamma_1_list:
         for gamma_2 in gamma_2_list:
@@ -235,8 +238,6 @@ def main(
                 gamma_2=gamma_2
             )
             # save the dataframes and the model parameters
-            place = f'results/{pde}/{optimizer.__class__.__name__}/'
-            results_directory = os.path.join(directory, place)
             save_results(
                 content=results,
                 directory=results_directory,
@@ -245,25 +246,21 @@ def main(
             path = results_directory + file_name + "_model.pth"
             torch.save(net.model.state_dict(), path)
     # save the final metrics as DataFrames
-    used_optimizer = optimizer.__class__.__name__
-    err_dir = f"/content/thesis/Error_tables/{pde}/"
-    if not os.path.isdir(err_dir):
-        os.makedirs(err_dir)
     pd.DataFrame(
         mse_error_table,
         index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list],
         columns = [f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]
-    ).to_csv(err_dir + f"{used_optimizer}_mse_table_epochs_{epochs}.csv")
+    ).to_csv(place + "mse_table.csv")
     pd.DataFrame(
         rel_l2_error_table,
         index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list],
         columns = [f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]
-    ).to_csv(err_dir + f"{used_optimizer}_rel_l2_table_epochs_{epochs}.csv")
+    ).to_csv(place + "rel_l2_table.csv")
     return
 
 if __name__ == '__main__':
     gamma_1_list=[0.7]
-    gamma_2_list=[0.5, 0.6, 0.7]
+    gamma_2_list=[0.8, 0.9, 1.0]
     hidden_units_1=1000
     hidden_units_2=1000
     epochs = 40000

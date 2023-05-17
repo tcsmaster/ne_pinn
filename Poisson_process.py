@@ -79,10 +79,10 @@ class PoissonNet():
             self.model.eval()
             with torch.no_grad():
                 pred=self.model(X_test)
-                mse_loss=mse_vec_error(pred, y_test)
-                rell2_loss=l2_relative_loss(pred, y_test)
-                res.loc[e,"Test mse loss"]=mse_loss
-                res.loc[e,"Test_rel_l2_loss"]=rell2_loss
+                mse_loss = MSELoss()(pred, y_test)
+                rell2_loss = torch.linalg.vector_norm(pred- y_test) / torch.linalg.vector_norm(y_test)
+                res.loc[e,"Test mse loss"]=mse_loss.item()
+                res.loc[e,"Test_rel_l2_loss"]=rell2_loss.item()
         return res
 
 
@@ -117,10 +117,8 @@ def main(
             The directory where the script runs. If not already existing, additional
             folders will be created for the results and model parameters in the
             following fashion:
-            model weights and test errors for individual networks:
-                directory/results/pde/optimizer/
-            final test metrics from all the networks:
-                directory/error_tables/pde/optimizer/
+            model weights,final test metrics and test errors for individual networks:
+                directory/results/pde/width_hidden_units_1/
         mse_error_table: np.ndarray
             Array that holds the final mean squared error test loss for the networks.
             Each column corresponds to a fixed gamma_1, while each row corresponds
@@ -152,6 +150,10 @@ def main(
 
     X_test = torch.linspace(-1, 1, 30, device=device).reshape(1, -1).T
     y_test = torch.sin(pi*X_test)
+
+    place = f'results/{pde}/width_{hidden_units_1}/'
+    results_directory = os.path.join(directory, place)
+
     for gamma_1 in gamma_1_list:
         for gamma_2 in gamma_2_list:
             print(
@@ -195,10 +197,6 @@ def main(
                 gamma_1=gamma_1,
                 gamma_2=gamma_2
             )
-            results_directory = os.path.join(
-                directory,
-                f'results/{pde}/{optimizer.__class__.__name__}/'
-            )
             save_results(
                 content=results,
                 directory=results_directory,
@@ -206,28 +204,24 @@ def main(
             )
             path = os.path.join(results_directory, file_name) + '_model.pth'
             torch.save(net.model.state_dict(), path)
-    used_optimizer = optimizer.__class__.__name__
-    err_dir = f"/content/thesis/Error_tables/{pde}/"
-    if not os.path.isdir(err_dir):
-        os.makedirs(err_dir)
     pd.DataFrame(
         mse_error_table,
         index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list],
         columns = [f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]
-    ).to_csv(err_dir + f'''{used_optimizer}_mse_table_epochs_{epochs}_width_{hidden_units_1}.csv''')
+    ).to_csv(place + 'mse_table.csv')
     pd.DataFrame(
         rel_l2_error_table,
         index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list],
         columns = [f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]
-    ).to_csv(err_dir + f'''{used_optimizer}_rel_l2_table_epochs_{epochs}_width_{hidden_units_1}.csv''')
+    ).to_csv(place + f'rel_l2_table.csv')
     return
 
 if __name__ == '__main__':
-    gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    gamma_1_list = [0.5]
     gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     hidden_units_1=100
     hidden_units_2=100
-    epochs=20000
+    epochs=200
     directory=os.getcwd()
     mse_error_table = np.zeros(
         (

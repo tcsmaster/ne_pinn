@@ -7,9 +7,9 @@ from utils import *
 
 """
 This script creates predictions of the trained PINNs for the Burgers equation
-at t=0 (initial condition), 0.25, 0.5 and 0.75 for different gamma_1 and gamma_2
+at t=0 (initial condition), t=0.25, t=0.5 and t=0.75 for different gamma_1 and gamma_2
 combinations, groups the plots according to gamma_1 and saves the plots to the
-directory curr_directory/prediction_plots/Burgers. 
+directory 'prediction_plots/Burgers'. 
 """
 plt.rcParams.update({                   # matplotlib parameter settings
     "font.monospace": [],
@@ -37,20 +37,15 @@ t, x, usol = data["t"], data["x"], data["usol"]
 for gamma_1 in gamma_1_list:
     fig, axs = plt.subplots(ncols=2, nrows=2)
     for ax, time in zip(axs.ravel(), t_space):
-        #create pytorch tensors from the numpy arrays
+        #create pytorch tensors from the numpy arrays at the given timepoint
         test_data = torch.stack(
             torch.meshgrid(
-                torch.tensor(
-                    [x],
-                    dtype=torch.float32
-                ).squeeze(),
-                torch.tensor(
-                    [time],
-                    dtype=torch.float32
-                ),
+                torch.tensor([x],dtype=torch.float32).squeeze(),
+                torch.tensor([time],dtype=torch.float32),
                 indexing="ij"
             )
         ).reshape(2, -1).T
+        # get the corresponding solution
         true_sol = usol[:, np.where(t == time)[0]]
         for gamma_2 in gamma_2_list:
             # define the model architecture
@@ -72,7 +67,7 @@ for gamma_1 in gamma_1_list:
             # make the prediction
             with torch.no_grad():
                 pred = net.model(test_data)
-            pred = pred.detach().numpy()
+            pred = pred.numpy()
             ax.plot(x, pred, label = f"$\gamma_2 = {{{gamma_2}}}$")
         ax.plot(x, true_sol, label="True solution")
         ax.set_xlabel("x")

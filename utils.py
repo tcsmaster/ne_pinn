@@ -8,7 +8,7 @@ def save_results(
     file_name
     ):
     """
-    Saves the content in the specified directory. Content could be DataFrame or figure
+    Saves the content in the specified directory.
     """
     if not os.path.isdir(directory):
         os.makedirs(directory)
@@ -39,4 +39,7 @@ def l2_relative_loss(pred, target):
     return np.linalg.norm(pred- target) / np.linalg.norm(target)
 
 def mse_vec_error(pred, target):
+    """
+    Calculates the mean squared error between the prediction and the target vector
+    """
     return np.linalg.norm(pred - target) / np.sqrt(len(pred))

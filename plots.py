@@ -42,7 +42,7 @@ def load_loss_for_single_gamma(
         gamma_1=gamma_1,
         gamma_2=gamma_2
     )
-    results_folder = f'results/{pde}/{optimizer}/'
+    results_folder = f'results/{pde}/width_{hidden_units_1}/'
 
     # Create full path to data file, including extension
     path = os.path.join(directory, results_folder, fname) + '.csv'
@@ -196,11 +196,11 @@ if __name__ == '__main__':
     pde = "Poisson"
     # "Training Loss", "Test mse loss", "Test_rel_l2_loss"
     acc = "Test mse loss" 
-    gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    gamma_1_list = [0.5]
     gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     hidden_units_1 = 100
     hidden_units_2 = 100
-    epochs = 20000
+    epochs = 200
     directory = os.getcwd()
     optimizer="Adam"
     run_accuracy_plots(
