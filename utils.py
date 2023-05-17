@@ -42,4 +42,4 @@ def mse_vec_error(pred, target):
     """
     Calculates the mean squared error between the prediction and the target vector
     """
-    return np.linalg.norm(pred - target) / np.sqrt(len(pred))
+    return np.square(np.linalg.norm(pred - target)) / len(pred)
