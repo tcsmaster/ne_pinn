@@ -151,7 +151,7 @@ def main(
     X_test = torch.linspace(-1, 1, 30, device=device).reshape(1, -1).T
     y_test = torch.sin(pi*X_test)
 
-    place = f'results/{pde}/width_{hidden_units_1}/'
+    place = f'results/{pde}/width_{hidden_units_1}_result/'
     results_directory = os.path.join(directory, place)
 
     for gamma_1 in gamma_1_list:
@@ -217,11 +217,11 @@ def main(
     return
 
 if __name__ == '__main__':
-    gamma_1_list = [0.5]
+    gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    hidden_units_1=100
-    hidden_units_2=100
-    epochs=200
+    hidden_units_1=1000
+    hidden_units_2=1000
+    epochs=20000
     directory=os.getcwd()
     mse_error_table = np.zeros(
         (

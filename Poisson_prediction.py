@@ -23,8 +23,8 @@ device = torch.device("cpu")
 optimizer = "Adam"
 gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-hidden_units_1 = 1000
-hidden_units_2 = 1000
+hidden_units_1 = 100
+hidden_units_2 = 100
 epochs=20000
 
 # Test data to predict on
@@ -46,7 +46,7 @@ for gamma_1 in gamma_1_list:
             ), device=device
         )
         # For prediction, load the model on the CPU
-        path = os.getcwd()+ f"/results/{pde}/{optimizer}/loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}_model.pth"
+        path = os.getcwd()+ f"/results/{pde}/width_{hidden_units_1}/loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}_model.pth"
         net.model.load_state_dict(torch.load(path,map_location='cpu'))
         net.model.eval()
         with torch.no_grad():
@@ -60,10 +60,10 @@ for gamma_1 in gamma_1_list:
     plt.ylabel("$\hat{u}(x)$", rotation=0)
     plt.grid()
     plt.legend(label_list, loc='lower center', bbox_to_anchor = [0.5, -0.2], ncols = len(label_list))
-    plt.title(f"Prediction for $\gamma_1 = {{{gamma_1}}}$")
+    plt.title(f"Prediction for $\gamma_1 = {{{gamma_1}}}$ for $N = {{{hidden_units_1}}}$")
     # create filename and save the plot
     file_name = f"plot_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}.jpg"
-    fig_dir = f"/content/thesis/prediction_figures/{pde}/"
+    fig_dir = f"/content/thesis/prediction_figures/{pde}/width_{hidden_units_1}_prediction_plot/"
     if not os.path.isdir(fig_dir):
         os.makedirs(fig_dir)
     plt.savefig(fig_dir + file_name, bbox_inches="tight", dpi=300)

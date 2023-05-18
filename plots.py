@@ -140,18 +140,18 @@ def run_accuracy_plots(
         directory=directory,
         optimizer=optimizer
     )
-    figures_directory = os.path.join(directory, f"figures/{pde}/{acc}/")
+    figures_directory = os.path.join(directory, f"figures/{pde}/width_{hidden_units_1}/{acc}_plot/")
     if not os.path.isdir(figures_directory):
         os.makedirs(figures_directory)
     for gamma_1 in gamma_1_list:
         fig = plt.figure(figsize=(20, 10))
         ax = data[gamma_1].plot()
         if acc == "Training Loss":
-            ax.set_title(f'Training loss for $\gamma_1={{{gamma_1}}}$')
+            ax.set_title(f'Training loss for $\gamma_1={{{gamma_1}}}$ for $N={{{hidden_units_1}}}$')
         elif acc == "Test mse loss":
-            ax.set_title(f'Test MSE-loss for $\gamma_1={{{gamma_1}}}$')
+            ax.set_title(f'Test MSE-loss for $\gamma_1={{{gamma_1}}}$ for $N={{{hidden_units_1}}}$')
         elif acc == "Test_rel_l2_loss":
-            ax.set_title(f'Relative $L^2$-loss for $\gamma_1={{{gamma_1}}}$')
+            ax.set_title(f'Relative $L^2$-loss for $\gamma_1={{{gamma_1}}}$ for $N={{{hidden_units_1}}}$')
         else:
             raise ValueError("This metric is not available!")
         plt.legend(title='$\gamma_2$', loc='lower center', bbox_to_anchor = [0.5, -0.3], ncols = len(gamma_2_list))
@@ -171,11 +171,11 @@ def run_accuracy_plots(
         fig = plt.figure(figsize=(20, 10))
         ax = data.xs(gamma_2, level=1, axis=1).plot()
         if acc == "Training Loss":
-            ax.set_title(f'Training loss for $\gamma_2={{{gamma_2}}}$')
+            ax.set_title(f'Training loss for $\gamma_2={{{gamma_2}}}$ for $N={{{hidden_units_1}}}$')
         elif acc == "Test mse loss":
-            ax.set_title(f'Test MSE-loss for $\gamma_2={{{gamma_2}}}$')
+            ax.set_title(f'Test MSE-loss for $\gamma_2={{{gamma_2}}}$ for $N={{{hidden_units_1}}}$')
         elif acc == "Test_rel_l2_loss":
-            ax.set_title(f'Relative $L^2$-loss for $\gamma_2={{{gamma_2}}}$')
+            ax.set_title(f'Relative $L^2$-loss for $\gamma_2={{{gamma_2}}}$ for $N={{{hidden_units_1}}}$')
         else:
             raise ValueError("This metric is not available!")
         plt.legend(title='$\gamma_1$', loc='lower center', bbox_to_anchor = [0.5, -0.3], ncols = len(gamma_1_list))
@@ -196,11 +196,11 @@ if __name__ == '__main__':
     pde = "Poisson"
     # "Training Loss", "Test mse loss", "Test_rel_l2_loss"
     acc = "Test mse loss" 
-    gamma_1_list = [0.5]
+    gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    hidden_units_1 = 100
-    hidden_units_2 = 100
-    epochs = 200
+    hidden_units_1 = 500
+    hidden_units_2 = 500
+    epochs = 20000
     directory = os.getcwd()
     optimizer="Adam"
     run_accuracy_plots(
