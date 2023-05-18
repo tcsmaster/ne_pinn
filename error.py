@@ -1,16 +1,22 @@
 import pandas as pd
 from utils import *
 from Burgers_process import BurgersNet
+from Poisson_process import PoissonNet
 from numpy import pi
+from torch.nn import MSELoss
 device=torch.device("cpu")
 gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-hidden_units_1=500
-hidden_units_2=500
-epochs=40000
-pde = 'Burgers'
+hidden_units_1=1000
+hidden_units_2=1000
+epochs=20000
+pde = 'Poisson'
 directory=os.getcwd()
 
+X_test = torch.linspace(-1, 1, 30, device=device).reshape(1, -1).T
+y_test = torch.sin(pi*X_test)
+
+'''
 data = np.load("Burgers.npz")
 t, x, usol = data["t"], data["x"], data["usol"]
 
@@ -22,6 +28,7 @@ X_test = torch.stack(
     )
 ).reshape(2, -1).T
 y_test = usol.reshape(-1, 1)
+'''
 mse_error_table = np.zeros(
         (
             len(gamma_2_list),
@@ -33,9 +40,9 @@ rel_l2_error_table = np.zeros_like(mse_error_table)
 
 for gamma_1 in gamma_1_list:
     for gamma_2 in gamma_2_list:
-        net = BurgersNet(
+        net = PoissonNet(
                 MLP2(
-                    num_input=2,
+                    num_input=1,
                     num_output=1,
                     hidden_units_1=hidden_units_1,
                     hidden_units_2=hidden_units_2,
@@ -44,32 +51,28 @@ for gamma_1 in gamma_1_list:
                 ),
                 device=device
             )
-        file_name =  directory + f'/results/{pde}/Adam/loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}_model.pth'
+        folder = directory + f'/results/{pde}/width_{hidden_units_1}/'
+        file_name =  folder + f'loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}_model.pth'
         net.model.load_state_dict(torch.load(file_name, map_location=torch.device("cpu")))
         net.model.eval()
         with torch.no_grad():
             pred=net.model(X_test)
-            pred = pred.detach().numpy()
         mse_error_table[
                 gamma_2_list.index(gamma_2),
                 gamma_1_list.index(gamma_1)
-                ] = mse_vec_error(pred, y_test)
+                ] = MSELoss()(pred, y_test).item()
         rel_l2_error_table[
                 gamma_2_list.index(gamma_2),
                 gamma_1_list.index(gamma_1)
-                ] = l2_relative_loss(pred, y_test)
-used_optimizer = 'Adam'
-err_dir = f"/content/thesis/Error_tables/{pde}/"
-if not os.path.isdir(err_dir):
-    os.makedirs(err_dir)
+                ] = torch.linalg.vector_norm(pred- y_test) / torch.linalg.vector_norm(y_test)
 pd.DataFrame(
         mse_error_table,
         index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list],
         columns = [f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]
-).to_csv(err_dir + f'''{used_optimizer}_mse_table_epochs_{epochs}.csv''')
+).to_csv(folder + 'mse_table.csv')
 pd.DataFrame(
         rel_l2_error_table,
         index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list],
         columns = [f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]
-).to_csv(err_dir + f'''{used_optimizer}_rel_l2_table_epochs_{epochs}.csv''')
+).to_csv(folder +'rel_l2_table.csv')
 
