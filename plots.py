@@ -26,7 +26,7 @@ def load_loss_for_single_gamma(
 ):
     """
     Loads a type of loss for a single pair of gamma_1 and gamma_2 from the directory
-    directory/results/pde/optimizer.
+    directory/results/pde/width_hidden_units_1_results.
 
     Arguments:
     ----------
@@ -42,7 +42,7 @@ def load_loss_for_single_gamma(
         gamma_1=gamma_1,
         gamma_2=gamma_2
     )
-    results_folder = f'results/{pde}/width_{hidden_units_1}/'
+    results_folder = f'results/{pde}/width_{hidden_units_1}_results/'
 
     # Create full path to data file, including extension
     path = os.path.join(directory, results_folder, fname) + '.csv'
@@ -193,14 +193,14 @@ def run_accuracy_plots(
     return
 
 if __name__ == '__main__':
-    pde = "Poisson"
+    pde = "Burgers"
     # "Training Loss", "Test mse loss", "Test_rel_l2_loss"
     acc = "Test mse loss" 
     gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     hidden_units_1 = 1000
     hidden_units_2 = 1000
-    epochs = 20000
+    epochs = 40000
     directory = os.getcwd()
     optimizer="Adam"
     run_accuracy_plots(

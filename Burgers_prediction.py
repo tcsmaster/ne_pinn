@@ -23,8 +23,8 @@ plt.rcParams.update({                   # matplotlib parameter settings
 
 pde = "Burgers"
 epochs=40000
-hidden_units_1 = 500
-hidden_units_2 = 500
+hidden_units_1 = 1000
+hidden_units_2 = 1000
 optimizer="Adam"
 gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
@@ -61,7 +61,7 @@ for gamma_1 in gamma_1_list:
                 device=torch.device('cpu')
             )
             #load the saved model weights
-            path = os.getcwd()+ f"/results/{pde}/{optimizer}/loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}_model.pth"
+            path = os.getcwd()+ f"results/width_{hidden_units_1}_results/loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}_model.pth"
             net.model.load_state_dict(torch.load(path,map_location='cpu'))
             net.model.eval()
             # make the prediction
@@ -74,7 +74,7 @@ for gamma_1 in gamma_1_list:
         ax.set_ylabel("$\hat{u}(x)$", rotation=0)
         ax.grid()
         ax.set_title(f"t={time}")
-    plt.suptitle(f"Prediction for $\gamma_1 = {{{gamma_1}}}$")
+    plt.suptitle(f"Prediction for $\gamma_1 = {{{gamma_1}}}$ for $N={{{hidden_units_1}}}$")
     fig.legend(
         [f"$\gamma_2 = {{{gamma_2}}}$" for gamma_2 in gamma_2_list] + ["True solution"],
         loc="lower center",
