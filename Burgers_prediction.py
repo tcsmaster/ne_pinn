@@ -84,7 +84,7 @@ for gamma_1 in gamma_1_list:
     fig.tight_layout()
     #save the figure
     file_name = f"plot_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}"
-    fig_dir = f"/content/thesis/prediction_figures/{pde}/"
+    fig_dir = f"/content/thesis/prediction_figures/{pde}/width_{hidden_units_1}_prediction_plots/"
     if not os.path.isdir(fig_dir):
         os.makedirs(fig_dir)
     plt.savefig(fig_dir + file_name + ".jpg",  bbox_inches="tight", dpi=300)
