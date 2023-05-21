@@ -14,7 +14,6 @@ class BurgersNet():
 
     Attributes:
     -----------
-
     model:
         A 2-layer feedforward neural network, instance of the MLP2 class.
     device:
@@ -50,24 +49,24 @@ class BurgersNet():
         Parameters:
         -----------
 
-            X_int_train: torch.tensor
-                Tensor that contains the PDE residual points
-            X_bc_train: torch.tensor
-                Tensor containing the boundary training data points
-            y_bc_train: torch.tensor
-                Tensor containing the lables for X_bc_train
-            X_ic_train: torch.tensor
-                Tensor containing initial condition training data
-            y_ic_train: torch.tensor
-                Tensor containing the labels for X_ic_train
-            X_test:torch.tensor
-                Tensor containing the test data
-            y_test:torch.tensor
-                tensor containing the labels for X_test
-            epochs:int
-                the number of epochs the network is going to train
-            optimizer:pytorch.optim.Optimizer
-                Optimizer used for updating the weights of the network.
+        X_int_train: torch.tensor
+            Tensor that contains the PDE residual points
+        X_bc_train: torch.tensor
+            Tensor containing the boundary training data points
+        y_bc_train: torch.tensor
+            Tensor containing the lables for X_bc_train
+        X_ic_train: torch.tensor
+            Tensor containing initial condition training data
+        y_ic_train: torch.tensor
+            Tensor containing the labels for X_ic_train
+        X_test: torch.tensor
+            Tensor containing the test data
+        y_test: torch.tensor
+            tensor containing the labels for X_test
+        epochs: int
+            the number of epochs the network is going to train
+        optimizer: pytorch.optim.Optimizer
+            Optimizer used for updating the weights of the network.
         """
         res = pd.DataFrame(
             None,
@@ -76,17 +75,24 @@ class BurgersNet():
         )
         for e in range(epochs):
             self.model.train()
+            # Clear the gradients
             optimizer.zero_grad()
+            # Compute the forward pass of the PDE-residual data
             u = self.model(X_int_train)
+            # Calculate the PDE-residual
             loss_pde = BurgersPDE(X_int_train, u, self.device)
+            # Compute the forward pass and the loss on the boundary data
             bc_pred = self.model(X_bc_train)
             loss_bc = MSELoss()(bc_pred, y_bc_train)
+            # Compute the forward pass and the loss on the initial data
             ic_pred = self.model(X_ic_train)
             loss_ic = MSELoss()(ic_pred, y_ic_train)
+            # The final loss
             loss = 0.5*(loss_pde + loss_bc + loss_ic)
             loss.backward()
             optimizer.step()
             res.loc[e, "Training Loss"] = loss.item()
+            # Evaluate the model on the test set
             self.model.eval()
             with torch.no_grad():
                 pred = self.model(X_test)
@@ -104,9 +110,6 @@ def main(
     hidden_units_1,
     hidden_units_2,
     epochs,
-    directory,
-    mse_error_table,
-    rel_l2_error_table,
     pde="Burgers"
 ):
     """
@@ -116,13 +119,13 @@ def main(
     Parameters
     ----------
         gamma_1_list: list
-            the mean-field scaling parameter for the first layer
+            the scaling parameter for the first hidden layer
         gamma_2_list: list  
-            the mean-field scaling parameter for the second layer
+            the  scaling parameter for the second hidden layer
         hidden_units_1: int
-            the number of nodes in the first layer
+            the number of nodes in the first hidden layer
         hidden_units_2: int
-            the number of nodes in the second layer
+            the number of nodes in the second hidden layer
         epochs: int
             The number of epochs the networks are training for
         directory: str
@@ -189,7 +192,10 @@ def main(
     y_test = usol.reshape(-1, 1)
     
     place = f'results/{pde}/width_{hidden_units_1}/'
-    results_directory = os.path.join(directory, place)
+    results_directory = os.path.join(os.getcwd(), place)
+    # numpy arrays for the final metrics
+    mse_error_table = np.zeros((len(gamma_2_list),len(gamma_1_list)),dtype=object)
+    rel_l2_error_table = np.zeros_like(mse_error_table)
 
     for gamma_1 in gamma_1_list:
         for gamma_2 in gamma_2_list:
@@ -209,6 +215,7 @@ def main(
                 device=device
             )
             optimizer = Adam(net.model.parameters(), amsgrad=True)
+            # train the model
             results = net.training(
                 X_int_train=X_int_train,
                 X_bc_train=X_bc_train,
@@ -245,7 +252,7 @@ def main(
             )
             path = results_directory + file_name + "_model.pth"
             torch.save(net.model.state_dict(), path)
-    # save the final metrics as DataFrames
+    # save the numpy arrays of final metrics as DataFrames
     pd.DataFrame(
         mse_error_table,
         index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list],
@@ -259,27 +266,15 @@ def main(
     return
 
 if __name__ == '__main__':
-    gamma_1_list=[0.7]
-    gamma_2_list=[0.8, 0.9, 1.0]
+    gamma_1_list=[0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    gamma_2_list=[0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     hidden_units_1=1000
     hidden_units_2=1000
     epochs = 40000
-    directory=os.getcwd()
-    mse_error_table = np.zeros(
-        (
-            len(gamma_2_list),
-            len(gamma_1_list)
-        ),
-        dtype=object
-    )
-    rel_l2_error_table = np.zeros_like(mse_error_table)
     main(
         gamma_1_list=gamma_1_list,
         gamma_2_list=gamma_2_list,
         hidden_units_1=hidden_units_1,
         hidden_units_2=hidden_units_2,
-        epochs=epochs,
-        directory=directory,
-        mse_error_table = mse_error_table,
-        rel_l2_error_table=rel_l2_error_table
+        epochs=epochs
     )

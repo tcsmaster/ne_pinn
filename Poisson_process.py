@@ -24,6 +24,9 @@ class PoissonNet():
         Trains the model with the given data and optimizer
     """
     def __init__(self, model, device):
+        """
+        Initializes the device, and moves the MLP2 to the device.
+        """
         self.device=device
         self.model=model.to(self.device)
  
@@ -40,7 +43,7 @@ class PoissonNet():
         """
         Trains a neural network with a given optimizer for the given epochs,
         returns a pandas DataFrame with the PINN training loss, mean squared error
-        and relative L²-error over the test dataset.
+        over the test dataset and the relative L²-error over the test dataset.
 
         Parameters:
         -----------
@@ -66,16 +69,21 @@ class PoissonNet():
         )
         for e in range(epochs):
             self.model.train()
+            #clear the gradients
             optimizer.zero_grad()
+            #compute the forward pass on the PDE-residual training data
             u = self.model(X_int_train)
             # Calculate the PDE-residual
             loss_pde = PoissonPDE(X_int_train,u,self.device)
+            # Calculate the forward pass for the boundary data
             bc_pred = self.model(X_bc_train)
+            # Calculate the boundary loss
             loss_bc = MSELoss()(bc_pred, y_bc_train)
             loss = 0.5*(loss_pde + loss_bc)
             loss.backward()
             optimizer.step()
             res.loc[e, "Training Loss"] = loss.item()
+            # Evaluate the model on the test set
             self.model.eval()
             with torch.no_grad():
                 pred=self.model(X_test)
@@ -92,14 +100,13 @@ def main(
     hidden_units_1,
     hidden_units_2,
     epochs,
-    directory,
-    mse_error_table,
-    rel_l2_error_table,
     pde="Poisson"
 ):
     """
     Trains a neural network model on predicting the solution of a Poisson-equation
-    and saves the resulting training and test metrics and model parameters to files.
+    and saves the resulting training and test metrics and model parameters in the
+    following folders: curr_dir/results/pde/width_hidden_units_1/. If not already
+    existing, the folders will be created for the results.
     
     Parameters
     ----------
@@ -113,20 +120,6 @@ def main(
             the number of nodes in the second layer
         epochs: int
             The number of epochs the networks are training for
-        directory: str
-            The directory where the script runs. If not already existing, additional
-            folders will be created for the results and model parameters in the
-            following fashion:
-            model weights,final test metrics and test errors for individual networks:
-                directory/results/pde/width_hidden_units_1/
-        mse_error_table: np.ndarray
-            Array that holds the final mean squared error test loss for the networks.
-            Each column corresponds to a fixed gamma_1, while each row corresponds
-            to a fixed gamma_2.
-        rel_l2_error_table: np.ndarray
-            Array that holds the final relative L^2 error test loss for the networks.
-            Each column corresponds to a fixed gamma_1, while each row corresponds
-            to a fixed gamma_2.
     
     Keyword arguments:
     pde: str
@@ -151,8 +144,11 @@ def main(
     X_test = torch.linspace(-1, 1, 30, device=device).reshape(1, -1).T
     y_test = torch.sin(pi*X_test)
 
-    place = f'results/{pde}/width_{hidden_units_1}_result/'
-    results_directory = os.path.join(directory, place)
+    file_folder = f'results/{pde}/width_{hidden_units_1}_result/'
+    results_directory = os.path.join(os.getcwd(), file_folder)
+    # arrays for the final metrics
+    mse_error_table = np.zeros((len(gamma_2_list),len(gamma_1_list)),dtype=object)
+    rel_l2_error_table = np.zeros_like(mse_error_table)
 
     for gamma_1 in gamma_1_list:
         for gamma_2 in gamma_2_list:
@@ -172,6 +168,7 @@ def main(
                 device=device
             )
             optimizer = Adam(net.model.parameters(), amsgrad=True)
+            # train the network
             results = net.training(
                 X_int_train=X_int_train,
                 X_bc_train=X_bc_train,
@@ -181,6 +178,7 @@ def main(
                 epochs=epochs,
                 optimizer=optimizer
             )
+            # save the final metrics to the arrays
             mse_error_table[
                 gamma_2_list.index(gamma_2),
                 gamma_1_list.index(gamma_1)
@@ -197,23 +195,26 @@ def main(
                 gamma_1=gamma_1,
                 gamma_2=gamma_2
             )
+            # save the csv files
             save_results(
                 content=results,
                 directory=results_directory,
                 file_name=file_name
             )
+            # save the models to the same directory
             path = os.path.join(results_directory, file_name) + '_model.pth'
             torch.save(net.model.state_dict(), path)
+    # save the numpy arrays of final metrics to a DataFrame
     pd.DataFrame(
         mse_error_table,
         index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list],
         columns = [f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]
-    ).to_csv(place + 'mse_table.csv')
+    ).to_csv(file_folder + 'mse_table.csv')
     pd.DataFrame(
         rel_l2_error_table,
         index = [f"gamma_2 = {gamma_2}" for gamma_2 in gamma_2_list],
         columns = [f"gamma_1 = {gamma_1}" for gamma_1 in gamma_1_list]
-    ).to_csv(place + f'rel_l2_table.csv')
+    ).to_csv(file_folder + f'rel_l2_table.csv')
     return
 
 if __name__ == '__main__':
@@ -221,23 +222,11 @@ if __name__ == '__main__':
     gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     hidden_units_1=1000
     hidden_units_2=1000
-    epochs=20000
-    directory=os.getcwd()
-    mse_error_table = np.zeros(
-        (
-            len(gamma_2_list),
-            len(gamma_1_list)
-        ),
-        dtype=object
-    )
-    rel_l2_error_table = np.zeros_like(mse_error_table)    
+    epochs=20000  
     main(
         gamma_1_list=gamma_1_list,
         gamma_2_list=gamma_2_list,
         hidden_units_1=hidden_units_1,
         hidden_units_2=hidden_units_2,
-        epochs=epochs,
-        directory=directory,
-        mse_error_table=mse_error_table,
-        rel_l2_error_table = rel_l2_error_table
+        epochs=epochs
     )

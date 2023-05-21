@@ -7,8 +7,8 @@ from torch.nn import MSELoss
 device=torch.device("cpu")
 gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-hidden_units_1=1000
-hidden_units_2=1000
+hidden_units_1=500
+hidden_units_2=500
 epochs=40000
 pde = 'Burgers'
 directory=os.getcwd()
@@ -45,7 +45,7 @@ for gamma_1 in gamma_1_list:
                 ),
                 device=device
             )
-        folder = directory + f'/width_{hidden_units_1}_results/'
+        folder = directory + f'/results/{pde}/width_{hidden_units_1}_results/'
         file_name =  folder + f'loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}_model.pth'
         net.model.load_state_dict(
             torch.load(

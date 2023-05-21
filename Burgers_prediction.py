@@ -6,10 +6,15 @@ from Burgers_process import *
 from utils import *
 
 """
-This script creates predictions of the trained PINNs for the Burgers equation
+This script creates predictions of the PINNs trained on the Burgers equation
+
+        u_t + u*u_x = 0.01/pi*u_xx   -1 < x < 1  ,  0 < t < 1
+            u(x, 0) = -sin(pi*x)      -1 < x < 1
+            u(t,-1) = u(t, 1) = 0     0 < t < 1
+
 at t=0 (initial condition), t=0.25, t=0.5 and t=0.75 for different gamma_1 and gamma_2
 combinations, groups the plots according to gamma_1 and saves the plots to the
-directory 'prediction_plots/Burgers'. 
+directory 'curr_dir/prediction_plots/Burgers'. 
 """
 plt.rcParams.update({                   # matplotlib parameter settings
     "font.monospace": [],
@@ -23,8 +28,8 @@ plt.rcParams.update({                   # matplotlib parameter settings
 
 pde = "Burgers"
 epochs=40000
-hidden_units_1 = 1000
-hidden_units_2 = 1000
+hidden_units_1 = 500
+hidden_units_2 = 500
 optimizer="Adam"
 gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
@@ -61,10 +66,9 @@ for gamma_1 in gamma_1_list:
                 device=torch.device('cpu')
             )
             #load the saved model weights
-            path = os.getcwd()+ f"results/width_{hidden_units_1}_results/loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}_model.pth"
+            path = os.getcwd()+ f"/results/{pde}/width_{hidden_units_1}_results/loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}_model.pth"
             net.model.load_state_dict(torch.load(path,map_location='cpu'))
             net.model.eval()
-            # make the prediction
             with torch.no_grad():
                 pred = net.model(test_data)
             pred = pred.numpy()
@@ -84,7 +88,7 @@ for gamma_1 in gamma_1_list:
     fig.tight_layout()
     #save the figure
     file_name = f"plot_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}"
-    fig_dir = f"/content/thesis/prediction_figures/{pde}/width_{hidden_units_1}_prediction_plots/"
+    fig_dir = os.getcwd() + f"/prediction_figures/{pde}/width_{hidden_units_1}_prediction_plots/"
     if not os.path.isdir(fig_dir):
         os.makedirs(fig_dir)
     plt.savefig(fig_dir + file_name + ".jpg",  bbox_inches="tight", dpi=300)

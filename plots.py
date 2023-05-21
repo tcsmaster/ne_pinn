@@ -20,20 +20,28 @@ def load_loss_for_single_gamma(
     hidden_units_1,
     hidden_units_2,
     gamma_1,
-    gamma_2,
-    directory,
-    optimizer
-):
+    gamma_2
+    ):
     """
     Loads a type of loss for a single pair of gamma_1 and gamma_2 from the directory
-    directory/results/pde/width_hidden_units_1_results.
+    curr_dir/results/pde/width_hidden_units_1_results.
 
     Arguments:
     ----------
 
     pde: str
-        The pde that is to be solved
-    """
+        The pde whose data is processed
+    epochs: str
+        The number of epochs the training was going for
+    hidden_units_1: int
+        The number of hidden nodes for the first layer
+    hidden_units_2: int
+        The number of hidden nodes of the second layer
+    gamma_1: float
+        The scaling parameter for the first layer
+    gamma_2: float
+        The scaling parameter for the second layer
+        """
     fname = generate_file_name(
         pde=pde,
         epochs=epochs,
@@ -45,7 +53,7 @@ def load_loss_for_single_gamma(
     results_folder = f'results/{pde}/width_{hidden_units_1}_results/'
 
     # Create full path to data file, including extension
-    path = os.path.join(directory, results_folder, fname) + '.csv'
+    path = os.path.join(os.getcwd(), results_folder, fname) + '.csv'
     
     # Load data file
     data = pd.read_csv(path, index_col=0)
@@ -60,15 +68,19 @@ def load_all_losses(
     gamma_1_list,
     gamma_2_list, 
     hidden_units_1,
-    hidden_units_2,
-    directory,
-    optimizer
-):
-    """Returns a DataFrame with either test or train accuracy by epoch for  
-    lists of gamma values
+    hidden_units_2
+    ):
+    """
+    Returns a DataFrame for a certain metric by epoch for a lists of gamma values.
     
     Parameters
     ----------
+    pde: str
+        The pde whose data is processed
+    epochs: str
+        The number of epochs the training was going for
+    acc:str
+        The metric that we're looking for. Either "Training loss", "Test mse loss" or "Test_rel_l2_loss"
     gamma_1_list: list of floats
         the scaling parameters for the first layer
     gamma_2_list: list of floats
@@ -91,9 +103,7 @@ def load_all_losses(
                 hidden_units_1=hidden_units_1,
                 hidden_units_2=hidden_units_2,
                 gamma_1=gamma_1,
-                gamma_2=gamma_2,
-                directory=directory,
-                optimizer=optimizer
+                gamma_2=gamma_2
             )
             dict_data[(gamma_1,gamma_2)] = data[acc]
         
@@ -102,22 +112,27 @@ def load_all_losses(
     return results
 
 
-def run_accuracy_plots(
+def run_plots(
     pde,
     epochs,
     acc,
     gamma_1_list,
     gamma_2_list,
     hidden_units_1,
-    hidden_units_2,
-    directory,
-    optimizer
-):
-    """Plots and saves figures of test or train accuracy for lists of multiple 
-    gamma values for Multi-layer perceptron with two hidden layers (MLP2)
+    hidden_units_2
+    ):
+    """
+    Plots and saves figures of a certain metric evolution for lists of multiple 
+    gamma values for multi-layer perceptron with two hidden layers (MLP2)
     
     Parameters
     ----------
+    pde: str
+        The pde whose data is processed
+    epochs: str
+        The number of epochs the training was going for
+    acc:str
+        The metric that we're looking for. Either "Training loss", "Test mse loss" or "Test_rel_l2_loss"
     gamma_1_list: list of floats
         the mean-field scaling parameters for the first layer 
     gamma_2_list: list of floats
@@ -136,13 +151,13 @@ def run_accuracy_plots(
         gamma_1_list=gamma_1_list,
         gamma_2_list=gamma_2_list,
         hidden_units_1=hidden_units_1,
-        hidden_units_2=hidden_units_2,
-        directory=directory,
-        optimizer=optimizer
+        hidden_units_2=hidden_units_2
     )
-    figures_directory = os.path.join(directory, f"figures/{pde}/width_{hidden_units_1}/{acc}_plot/")
+    # the target directory for the plots
+    figures_directory = os.path.join(os.getcwd(), f"figures/{pde}/width_{hidden_units_1}/{acc}_plot/")
     if not os.path.isdir(figures_directory):
         os.makedirs(figures_directory)
+    # Plot the metric evolution for fixed gamma_1
     for gamma_1 in gamma_1_list:
         fig = plt.figure(figsize=(20, 10))
         ax = data[gamma_1].plot()
@@ -157,8 +172,7 @@ def run_accuracy_plots(
         plt.legend(title='$\gamma_2$', loc='lower center', bbox_to_anchor = [0.5, -0.3], ncols = len(gamma_2_list))
         plt.xlabel('Number of Epochs')
         plt.ylabel("Loss")
-        if pde=="Poisson":
-            plt.yscale('log')
+        plt.yscale('log')
         plt.grid()
 
         fname = f'plot_gamma1_{gamma_1}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}'
@@ -166,7 +180,7 @@ def run_accuracy_plots(
         fig_path = os.path.join(figures_directory, fname)       
         ax.figure.savefig(fig_path + '.jpg', dpi=300, bbox_inches='tight')
         plt.close('all')      
-        
+    # Plot the metric evolution for fixed gamma_2
     for gamma_2 in gamma_2_list:
         fig = plt.figure(figsize=(20, 10))
         ax = data.xs(gamma_2, level=1, axis=1).plot()
@@ -181,8 +195,7 @@ def run_accuracy_plots(
         plt.legend(title='$\gamma_1$', loc='lower center', bbox_to_anchor = [0.5, -0.3], ncols = len(gamma_1_list))
         plt.xlabel('Number of Epochs')
         plt.ylabel("Loss")
-        if pde == "Poisson":
-            plt.yscale('log')
+        plt.yscale('log')
         plt.grid()
 
         fname = f'plot_gamma2_{gamma_2}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}'
@@ -193,26 +206,21 @@ def run_accuracy_plots(
     return
 
 if __name__ == '__main__':
-    pde = "Burgers"
-    # "Training Loss", "Test mse loss", "Test_rel_l2_loss"
-    acc = "Test mse loss" 
+    pde = "Poisson"
+    acc = "Test mse loss"   # "Training Loss", "Test mse loss", "Test_rel_l2_loss"
     gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    hidden_units_1 = 1000
-    hidden_units_2 = 1000
-    epochs = 40000
-    directory = os.getcwd()
-    optimizer="Adam"
-    run_accuracy_plots(
+    hidden_units_1 = 100
+    hidden_units_2 = 100
+    epochs = 20000
+    run_plots(
         pde=pde,
         epochs=epochs,
         acc=acc,
         gamma_1_list = gamma_1_list,
         gamma_2_list = gamma_2_list,
         hidden_units_1 = hidden_units_1,
-        hidden_units_2 = hidden_units_2,
-        directory=directory,
-        optimizer=optimizer
+        hidden_units_2 = hidden_units_2
     )
 
 
