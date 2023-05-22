@@ -28,8 +28,8 @@ device = torch.device("cpu")
 optimizer = "Adam"
 gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-hidden_units_1 = 100
-hidden_units_2 = 100
+hidden_units_1 = 1000
+hidden_units_2 = 1000
 epochs=20000
 
 # Test data to predict on

@@ -50,7 +50,7 @@ def load_loss_for_single_gamma(
         gamma_1=gamma_1,
         gamma_2=gamma_2
     )
-    results_folder = f'results/{pde}/width_{hidden_units_1}_results/'
+    results_folder = f'results/{pde}/width_{hidden_units_1}/'
 
     # Create full path to data file, including extension
     path = os.path.join(os.getcwd(), results_folder, fname) + '.csv'
@@ -210,8 +210,8 @@ if __name__ == '__main__':
     acc = "Test mse loss"   # "Training Loss", "Test mse loss", "Test_rel_l2_loss"
     gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    hidden_units_1 = 100
-    hidden_units_2 = 100
+    hidden_units_1 = 1000
+    hidden_units_2 = 1000
     epochs = 20000
     run_plots(
         pde=pde,
