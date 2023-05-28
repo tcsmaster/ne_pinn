@@ -28,8 +28,8 @@ plt.rcParams.update({                   # matplotlib parameter settings
 
 pde = "Burgers"
 epochs=40000
-hidden_units_1 = 1000
-hidden_units_2 = 1000
+hidden_units_1 = 100
+hidden_units_2 = 100
 optimizer="Adam"
 gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
@@ -66,7 +66,7 @@ for gamma_1 in gamma_1_list:
                 device=torch.device('cpu')
             )
             #load the saved model weights
-            path = os.getcwd()+ f"/results/{pde}/width_{hidden_units_1}_results/loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}_model.pth"
+            path = os.getcwd()+ f"/results/{pde}/width_{hidden_units_1}/loss_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}_model.pth"
             net.model.load_state_dict(torch.load(path,map_location='cpu'))
             net.model.eval()
             with torch.no_grad():
@@ -88,7 +88,7 @@ for gamma_1 in gamma_1_list:
     fig.tight_layout()
     #save the figure
     file_name = f"plot_{pde}_hidden1_{hidden_units_1}_hidden2_{hidden_units_2}_gamma1_{gamma_1}_gamma2_{gamma_2}_epochs_{epochs}"
-    fig_dir = os.getcwd() + f"/prediction_figures/{pde}/width_{hidden_units_1}_prediction_plots/"
+    fig_dir = os.getcwd() + f"/prediction_figures/{pde}/width_{hidden_units_1}/"
     if not os.path.isdir(fig_dir):
         os.makedirs(fig_dir)
     plt.savefig(fig_dir + file_name + ".jpg",  bbox_inches="tight", dpi=300)

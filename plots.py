@@ -206,13 +206,13 @@ def run_plots(
     return
 
 if __name__ == '__main__':
-    pde = "Poisson"
+    pde = "Burgers"
     acc = "Test mse loss"   # "Training Loss", "Test mse loss", "Test_rel_l2_loss"
     gamma_1_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     gamma_2_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    hidden_units_1 = 1000
-    hidden_units_2 = 1000
-    epochs = 20000
+    hidden_units_1 = 100
+    hidden_units_2 = 100
+    epochs = 40000
     run_plots(
         pde=pde,
         epochs=epochs,
