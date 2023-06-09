@@ -18,7 +18,7 @@ My thesis investigated the effects of varying normalization exponents in the phy
 
 I trained 2-layer neural networks for the combinations $\{\gamma_1, \gamma_2\} = \{0.5, 0.6, 0.7, 0.8, 0.9, 1.0\}^2$.
 
-For the Poisson equation, I found a very large difference between the "$\gamma_1 \approx  0.5$ and $\gamma_2 \approx 1.0$" region of the scaling landscape, and the rest, while 4 out of the 5 lowest errors had $\gamma_2 = 0.7$.
+For the Poisson equation, I found a very large difference between the " $\gamma_1 \approx 0.5$ and $\gamma_2 \approx 1.0$" region of the scaling landscape, and the rest, while 4 out of the 5 lowest errors had $\gamma_2 = 0.7$.
 
 | $\gamma_2$ \ $\gamma_1$ | $0.5$   | $0.6$             | $0.7$         | $0.8$            | $0.9$            | $1.0$   |
 |------------------------------------------------------------------------------------------------|---------|-------------------|---------------|------------------|------------------|---------|
